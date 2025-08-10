@@ -10,7 +10,7 @@ const ordersRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 
 // Validate required environment variables
-const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'ADMIN_TOKEN'];
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'ADMIN_TOKEN'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {

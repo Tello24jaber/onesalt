@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { getAllProducts, getProductBySlug } = require('../controllers/productsController');
+const productsController = require('../controllers/productsController');
 
-// GET /products - Get all products
-router.get('/', getAllProducts);
+router.get('/', productsController.getAllProducts);
+router.get('/slug/:slug', productsController.getProductBySlug); // must be before :id
+router.get('/:id', productsController.getProductById);
 
-// GET /products/:slug - Get product by slug
-router.get('/:slug', getProductBySlug);
+router.post('/', productsController.createProduct);
+router.put('/:id', productsController.updateProduct);
+router.delete('/:id', productsController.deleteProduct);
 
 module.exports = router;
