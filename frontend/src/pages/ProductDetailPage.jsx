@@ -177,9 +177,7 @@ const ProductDetailPage = () => {
                 <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                   {product.name}
                 </h1>
-                <button className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 group">
-                  <Heart className="h-6 w-6 text-gray-400 group-hover:text-red-500 group-hover:fill-current transition-colors duration-300" />
-                </button>
+               
               </div>
               
               <div className="flex items-center space-x-4">

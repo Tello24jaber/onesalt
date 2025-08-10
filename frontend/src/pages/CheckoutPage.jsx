@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, RefreshCw } from 'lucide-react';
-import { useCart } from '../context/ontext'; // FIXED import path
+import { ArrowLeft, CreditCard, RefreshCw, Phone, MapPin, User, FileText } from 'lucide-react';
+import { useCart } from '../context/ontext';
 import { ordersAPI } from '../services/api';
 import { toast } from 'react-toastify';
 import { ButtonLoader } from '../components/loadingSpinner';
@@ -10,6 +10,24 @@ const CheckoutPage = () => {
   const { items, totalItems, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Jordanian cities list (English and Arabic)
+  const jordanianCities = [
+    // English names
+    'amman', 'zarqa', 'irbid', 'russeifa', 'quwaysimah', 'wadi as sir', 'tilaa al ali',
+    'khuraybat as suq', 'aqaba', 'sahab', 'al jubayhah', 'shafa badran', 'al mafraq',
+    'madaba', 'as salt', 'ar ramtha', 'jerash', 'maan', 'tafilah', 'karak', 'ajloun',
+    'naour', 'marj al hamam', 'ain al basha', 'al hashimiyah', 'al husn', 'az zarqa al jadidah',
+    'muqabalain', 'al quwayrah', 'at turrah', 'dahiyat ar rashid', 'azraq', 'bayt ras',
+    'dayr alla', 'jalul', 'kufranjah', 'sahab', 'shafa badran', 'sweileh', 'tabarbour',
+    // Arabic names
+    'عمان', 'عمّان', 'الزرقاء', 'اربد', 'إربد', 'الرصيفة', 'القويسمة', 'وادي السير',
+    'تلاع العلي', 'خريبة السوق', 'العقبة', 'سحاب', 'الجبيهة', 'شفا بدران', 'المفرق',
+    'مادبا', 'السلط', 'الرمثا', 'جرش', 'معان', 'الطفيلة', 'الكرك', 'عجلون',
+    'ناعور', 'مرج الحمام', 'عين الباشا', 'الهاشمية', 'الحصن', 'الزرقاء الجديدة',
+    'مقابلين', 'القويرة', 'الطرة', 'ضاحية الرشيد', 'الأزرق', 'بيت راس',
+    'دير علا', 'جلول', 'كفرنجة', 'صويلح', 'طبربور'
+  ];
   
   // Customer form state
   const [customerForm, setCustomerForm] = useState({
@@ -23,7 +41,6 @@ const CheckoutPage = () => {
   // Verification states
   const [captcha, setCaptcha] = useState({
     question: '',
-    answer: '',
     userAnswer: '',
     correctAnswer: 0
   });
@@ -65,25 +82,23 @@ const CheckoutPage = () => {
     
     setCaptcha({
       question,
-      answer: '',
       userAnswer: '',
       correctAnswer: answer
     });
   };
 
-  // Validate phone number
+  // Validate Jordanian phone number (starts with 07, 10 digits)
   const validatePhone = (phone) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
     const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
     
-    if (cleanPhone.length < 8) {
-      return { isValid: false, message: 'Phone number too short' };
+    if (cleanPhone.length !== 10) {
+      return { isValid: false, message: 'Phone number must be 10 digits' };
     }
-    if (cleanPhone.length > 15) {
-      return { isValid: false, message: 'Phone number too long' };
+    if (!cleanPhone.startsWith('07')) {
+      return { isValid: false, message: 'Phone number must start with 07' };
     }
-    if (!phoneRegex.test(cleanPhone)) {
-      return { isValid: false, message: 'Invalid phone number format' };
+    if (!/^07[0-9]{8}$/.test(cleanPhone)) {
+      return { isValid: false, message: 'Invalid Jordanian phone number' };
     }
     return { isValid: true, message: 'Valid phone number' };
   };
@@ -96,26 +111,27 @@ const CheckoutPage = () => {
     if (address.length > 100) {
       return { isValid: false, message: 'Address too long (maximum 100 characters)' };
     }
-    if (!/\d/.test(address)) {
-      return { isValid: false, message: 'Address should contain house/building number' };
-    }
     return { isValid: true, message: 'Valid address' };
   };
 
-  // Validate city
+  // Validate city (must be a Jordanian city)
   const validateCity = (city) => {
-    const cityRegex = /^[a-zA-Z\s\-']{2,50}$/;
+    const normalizedCity = city.trim().toLowerCase();
     
     if (city.length < 2) {
       return { isValid: false, message: 'City name too short' };
     }
-    if (city.length > 50) {
-      return { isValid: false, message: 'City name too long' };
+    
+    // Check if the city is in our list of Jordanian cities
+    const isValidCity = jordanianCities.some(validCity => 
+      validCity.toLowerCase() === normalizedCity
+    );
+    
+    if (!isValidCity) {
+      return { isValid: false, message: 'Please enter a valid Jordanian city' };
     }
-    if (!cityRegex.test(city)) {
-      return { isValid: false, message: 'Invalid city name (only letters, spaces, hyphens allowed)' };
-    }
-    return { isValid: true, message: 'Valid city name' };
+    
+    return { isValid: true, message: 'Valid city' };
   };
 
   // Initialize captcha on mount
@@ -173,7 +189,7 @@ const CheckoutPage = () => {
 
     // Check individual field validations
     if (!validation.phone.isValid) {
-      toast.error('Please enter a valid phone number');
+      toast.error('Please enter a valid Jordanian phone number (07XXXXXXXX)');
       return false;
     }
     if (!validation.address.isValid) {
@@ -202,45 +218,58 @@ const CheckoutPage = () => {
     try {
       setIsProcessing(true);
       
-      // Create orders for each cart item with full details
-      const orderPromises = items.map(item => {
-        const orderData = {
-          // Customer info
-          name: customerForm.name,
-          phone: customerForm.phone,
-          address: customerForm.address,
-          city: customerForm.city,
-          notes: customerForm.notes,
-          
-          // Product details
+      // Prepare order data with full item details
+      const orderData = {
+        // Customer info
+        name: customerForm.name,
+        phone: customerForm.phone,
+        address: customerForm.address,
+        city: customerForm.city,
+        notes: customerForm.notes || '',
+        
+        // Order totals
+        total_price: totalPrice,
+        
+        // Full item details
+        items: items.map(item => ({
           product_id: item.productId,
           product_name: item.name,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
-          price_per_item: item.price,
-          total_price: item.price * item.quantity
-        };
-        
-        return ordersAPI.create(orderData);
-      });
+          unit_price: item.price,
+          subtotal: item.price * item.quantity
+        }))
+      };
 
-      await Promise.all(orderPromises);
+      // Send order to backend
+      const response = await ordersAPI.create(orderData);
       
       toast.success('🎉 Order placed successfully!');
+      
+      // Clear cart after successful order
       clearCart();
       
+      // Navigate to thank you page with order data
       navigate('/thank-you', { 
         state: { 
-          orderCount: totalItems,
-          totalAmount: totalPrice,
-          customerName: customerForm.name
+          orderData: {
+            order_id: response.data.order_id,
+            customer_name: customerForm.name,
+            phone: customerForm.phone,
+            address: customerForm.address,
+            city: customerForm.city,
+            notes: customerForm.notes,
+            total_price: totalPrice,
+            items: orderData.items,
+            created_at: new Date().toISOString()
+          }
         }
       });
       
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error('Failed to place order. Please try again.');
+      toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -251,35 +280,35 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F9FAFB] py-8">
+      <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center mb-8">
+        <div className="flex items-center mb-6">
           <Link 
             to="/cart" 
-            className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors duration-300 group"
+            className="flex items-center gap-2 text-gray-600 hover:text-[#90CAF9] transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
+            <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">Back to Cart</span>
           </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Order Receipt */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
+          {/* Order Summary */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-[#0F0F0F] mb-6">Order Summary</h2>
             
             {/* Items List */}
             <div className="space-y-3 mb-6">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between items-start py-2 border-b border-gray-100">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{item.name}</h4>
+                    <h4 className="font-semibold text-[#0F0F0F]">{item.name}</h4>
                     <p className="text-sm text-gray-600">
                       {item.color} / {item.size} × {item.quantity}
                     </p>
                   </div>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-[#0F0F0F]">
                     {formatPrice(item.price * item.quantity)}
                   </span>
                 </div>
@@ -295,144 +324,152 @@ const CheckoutPage = () => {
                 <span className="text-gray-600">Shipping</span>
                 <span className="font-semibold text-green-600">Free</span>
               </div>
-              <div className="flex justify-between items-center text-xl font-bold text-gray-900 mt-4 pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center text-xl font-bold text-[#0F0F0F] mt-4 pt-4 border-t border-gray-200">
                 <span>Total</span>
-                <span className="text-blue-600">{formatPrice(totalPrice)}</span>
+                <span className="text-[#90CAF9]">{formatPrice(totalPrice)}</span>
               </div>
             </div>
           </div>
 
           {/* Shipping Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <form onSubmit={handleCheckout} className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Shipping Information</h2>
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <form onSubmit={handleCheckout} className="space-y-5">
+              <h2 className="text-2xl font-bold text-[#0F0F0F] mb-6">Shipping Information</h2>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={customerForm.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300"
-                    placeholder="Enter your full name"
-                  />
-                </div>
+              {/* Name */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <User className="h-4 w-4" />
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={customerForm.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#90CAF9] focus:outline-none transition-colors"
+                  placeholder="Enter your full name"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={customerForm.phone}
-                    onChange={handleInputChange}
-                    required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-100 transition-all duration-300 ${
-                      validation.phone.isValid === null ? 'border-gray-200 focus:border-blue-400' :
-                      validation.phone.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
-                    }`}
-                    placeholder="Enter your phone number"
-                  />
-                  {validation.phone.isValid !== null && (
-                    <p className={`text-sm mt-1 ${validation.phone.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                      {validation.phone.message}
-                    </p>
-                  )}
-                </div>
+              {/* Phone */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <Phone className="h-4 w-4" />
+                  Phone Number * (Jordanian)
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={customerForm.phone}
+                  onChange={handleInputChange}
+                  required
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors ${
+                    validation.phone.isValid === null ? 'border-gray-200 focus:border-[#90CAF9]' :
+                    validation.phone.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
+                  }`}
+                  placeholder="07XXXXXXXX"
+                  maxLength="10"
+                />
+                {validation.phone.isValid !== null && (
+                  <p className={`text-sm mt-1 ${validation.phone.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                    {validation.phone.message}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Full Address *
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={customerForm.address}
-                    onChange={handleInputChange}
-                    required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-100 transition-all duration-300 ${
-                      validation.address.isValid === null ? 'border-gray-200 focus:border-blue-400' :
-                      validation.address.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
-                    }`}
-                    placeholder="Enter your complete address with house number"
-                  />
-                  {validation.address.isValid !== null && (
-                    <p className={`text-sm mt-1 ${validation.address.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                      {validation.address.message}
-                    </p>
-                  )}
-                </div>
+              {/* Address */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <MapPin className="h-4 w-4" />
+                  Full Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={customerForm.address}
+                  onChange={handleInputChange}
+                  required
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors ${
+                    validation.address.isValid === null ? 'border-gray-200 focus:border-[#90CAF9]' :
+                    validation.address.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
+                  }`}
+                  placeholder="Street, Building, Floor, etc."
+                />
+                {validation.address.isValid !== null && (
+                  <p className={`text-sm mt-1 ${validation.address.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                    {validation.address.message}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    City *
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={customerForm.city}
-                    onChange={handleInputChange}
-                    required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-100 transition-all duration-300 ${
-                      validation.city.isValid === null ? 'border-gray-200 focus:border-blue-400' :
-                      validation.city.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
-                    }`}
-                    placeholder="Enter your city"
-                  />
-                  {validation.city.isValid !== null && (
-                    <p className={`text-sm mt-1 ${validation.city.isValid ? 'text-green-600' : 'text-red-600'}`}>
-                      {validation.city.message}
-                    </p>
-                  )}
-                </div>
+              {/* City */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <MapPin className="h-4 w-4" />
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={customerForm.city}
+                  onChange={handleInputChange}
+                  required
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors ${
+                    validation.city.isValid === null ? 'border-gray-200 focus:border-[#90CAF9]' :
+                    validation.city.isValid ? 'border-green-300 focus:border-green-400' : 'border-red-300 focus:border-red-400'
+                  }`}
+                  placeholder="Amman, Irbid, Zarqa, etc."
+                />
+                {validation.city.isValid !== null && (
+                  <p className={`text-sm mt-1 ${validation.city.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                    {validation.city.message}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Special Notes (Optional)
-                  </label>
-                  <textarea
-                    name="notes"
-                    value={customerForm.notes}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 resize-none"
-                    placeholder="Any special instructions..."
-                  />
-                </div>
+              {/* Notes */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <FileText className="h-4 w-4" />
+                  Special Notes (Optional)
+                </label>
+                <textarea
+                  name="notes"
+                  value={customerForm.notes}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#90CAF9] focus:outline-none transition-colors resize-none"
+                  placeholder="Any special instructions for delivery..."
+                />
+              </div>
 
-                {/* Human Verification */}
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Human Verification *
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-white px-4 py-2 rounded-lg border-2 border-blue-200 font-mono text-lg font-bold text-blue-700">
-                      {captcha.question} = ?
-                    </div>
-                    <input
-                      type="number"
-                      value={captcha.userAnswer}
-                      onChange={handleCaptchaChange}
-                      required
-                      className="w-20 px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300"
-                      placeholder="Answer"
-                    />
-                    <button
-                      type="button"
-                      onClick={generateCaptcha}
-                      className="p-2 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors duration-200"
-                      title="Generate new question"
-                    >
-                      <RefreshCw className="h-4 w-4 text-blue-600" />
-                    </button>
+              {/* Human Verification */}
+              <div className="bg-[#90CAF9]/10 rounded-xl p-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Human Verification *
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="bg-white px-4 py-2 rounded-lg border-2 border-[#90CAF9]/30 font-mono text-lg font-bold text-[#0F0F0F]">
+                    {captcha.question} = ?
                   </div>
-                  <p className="text-xs text-gray-600 mt-2">Please solve the math question to verify you're human</p>
+                  <input
+                    type="number"
+                    value={captcha.userAnswer}
+                    onChange={handleCaptchaChange}
+                    required
+                    className="w-20 px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-[#90CAF9] focus:outline-none transition-colors"
+                    placeholder="?"
+                  />
+                  <button
+                    type="button"
+                    onClick={generateCaptcha}
+                    className="p-2 bg-[#90CAF9]/20 hover:bg-[#90CAF9]/30 rounded-lg transition-colors"
+                    title="Generate new question"
+                  >
+                    <RefreshCw className="h-4 w-4 text-[#42A5F5]" />
+                  </button>
                 </div>
               </div>
 
@@ -440,7 +477,7 @@ const CheckoutPage = () => {
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:from-blue-600 hover:to-blue-700 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center"
+                className="w-full bg-[#90CAF9] hover:bg-[#42A5F5] text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center"
               >
                 {isProcessing ? (
                   <>
@@ -458,10 +495,10 @@ const CheckoutPage = () => {
               {/* Delivery Info */}
               <div className="bg-blue-50 rounded-xl p-4 text-center">
                 <p className="text-sm text-gray-700">
-                  <strong>📞 Order Confirmation:</strong> We will call you to confirm your order details.
+                  <strong>📞 Order Confirmation:</strong> We'll call you to confirm your order.
                 </p>
                 <p className="text-sm text-gray-700 mt-1">
-                  <strong>🚚 Delivery:</strong> Your order will arrive in 2-3 business days.
+                  <strong>🚚 Fast Delivery:</strong> Your order will arrive in 1-3 days.
                 </p>
               </div>
             </form>

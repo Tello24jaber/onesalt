@@ -15,14 +15,14 @@ const SplashScreen = ({ onComplete }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onComplete, 500); // Wait for fade out animation
-    }, 3000); // 3 seconds display time
+      setTimeout(onComplete, 300); // Reduced fade out time
+    }, 2500); // Reduced display time
 
     return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
-    <div className={`fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-500 ${
+    <div className={`fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-300 ${
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
       <div className="text-center space-y-6">
@@ -91,25 +91,25 @@ const SplashScreen = ({ onComplete }) => {
         }
 
         .animate-fade-in-up {
-          animation: fadeInUp 1s ease-out;
+          animation: fadeInUp 0.8s ease-out;
         }
 
         .animate-fade-in-delayed {
           opacity: 0;
-          animation: fadeIn 0.8s ease-out 0.5s forwards;
+          animation: fadeIn 0.6s ease-out 0.4s forwards;
         }
 
         .animate-fade-in-delayed-more {
           opacity: 0;
-          animation: fadeIn 0.8s ease-out 1s forwards;
+          animation: fadeIn 0.6s ease-out 0.8s forwards;
         }
 
         .animate-expand-width {
-          animation: expandWidth 1.5s ease-out 0.5s forwards;
+          animation: expandWidth 1.2s ease-out 0.4s forwards;
         }
 
         .animate-pulse-slow {
-          animation: pulseSlow 2s ease-in-out infinite;
+          animation: pulseSlow 1.5s ease-in-out infinite;
         }
       `}</style>
     </div>
@@ -120,13 +120,32 @@ const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [isAnimated, setIsAnimated] = useState(false);
+
+  // Scroll to top and prevent scroll restoration
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
+    // Disable scroll restoration for this session
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // Re-enable scroll restoration when component unmounts
+    return () => {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
         setLoading(true);
         const response = await productsAPI.getAll();
-        setFeaturedProducts(response.data?.slice(0, 3) || []);
+        const products = response?.data || response || [];
+        setFeaturedProducts(products.slice(0, 3));
       } catch (error) {
         console.error('Error fetching featured products:', error);
         toast.error('Failed to load featured products');
@@ -135,11 +154,25 @@ const HomePage = () => {
       }
     };
 
-    // Only fetch after splash screen
+    // Only fetch after splash screen and trigger animations
     if (!showSplash) {
       fetchFeaturedProducts();
+      // Trigger animations after a short delay to ensure smooth rendering
+      setTimeout(() => setIsAnimated(true), 100);
     }
   }, [showSplash]);
+
+  // Smooth scroll function for internal links
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
 
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
@@ -159,13 +192,14 @@ const HomePage = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F0F0F]/40 via-[#0F0F0F]/20 to-[#F9FAFB]"></div>
         
-        {/* Floating elements - Hidden on mobile for cleaner look */}
-        <div className="absolute top-20 left-10 w-24 h-24 bg-[#90CAF9]/30 rounded-full animate-float backdrop-blur-sm hidden lg:block"></div>
-        <div className="absolute bottom-32 right-16 w-36 h-36 bg-[#42A5F5]/20 rounded-full animate-float backdrop-blur-sm hidden lg:block" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 left-20 w-16 h-16 bg-white/20 rounded-full animate-pulse hidden lg:block"></div>
+        {/* Floating elements - Simplified and fewer */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-[#90CAF9]/20 rounded-full animate-float-gentle backdrop-blur-sm hidden lg:block"></div>
+        <div className="absolute bottom-32 right-16 w-24 h-24 bg-[#42A5F5]/15 rounded-full animate-float-gentle backdrop-blur-sm hidden lg:block" style={{animationDelay: '2s'}}></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-8">
-          <div className="text-center space-y-6 md:space-y-8 lg:space-y-10 animate-fade-in">
+          <div className={`text-center space-y-6 md:space-y-8 lg:space-y-10 transition-all duration-700 ${
+            isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
             {/* Main Heading - Responsive Sizing */}
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white drop-shadow-2xl">
@@ -185,37 +219,35 @@ const HomePage = () => {
                 Browse Collection
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
               </Link>
-              <a 
-                href="#featured" 
+              <button 
+                onClick={(e) => handleSmoothScroll(e, 'featured')}
                 className="bg-white/90 backdrop-blur-sm hover:bg-white text-[#0F0F0F] text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto"
               >
                 View Featured
-              </a>
+              </button>
             </div>
 
             {/* Stats - Improved Mobile Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-8 sm:pt-12 max-w-3xl mx-auto px-4">
-              <div className="text-center space-y-2 sm:space-y-3 animate-slide-up bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg" style={{animationDelay: '0.2s'}}>
-                <div className="bg-[#90CAF9]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
-                  <Shirt className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
+              {[
+                { icon: Shirt, value: "4+", label: "Unique Designs", delay: "0.2s" },
+                { icon: Star, value: "Premium", label: "Quality", delay: "0.4s" },
+                { icon: Users, value: "100+", label: "Happy Customers", delay: "0.6s" }
+              ].map((stat, index) => (
+                <div 
+                  key={index}
+                  className={`text-center space-y-2 sm:space-y-3 bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg transition-all duration-500 ${
+                    isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  style={{transitionDelay: stat.delay}}
+                >
+                  <div className="bg-[#90CAF9]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
+                    <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">{stat.value}</div>
+                  <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">4+</div>
-                <div className="text-sm sm:text-base text-gray-600">Unique Designs</div>
-              </div>
-              <div className="text-center space-y-2 sm:space-y-3 animate-slide-up bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg" style={{animationDelay: '0.4s'}}>
-                <div className="bg-[#42A5F5]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
-                  <Star className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">Premium</div>
-                <div className="text-sm sm:text-base text-gray-600">Quality</div>
-              </div>
-              <div className="text-center space-y-2 sm:space-y-3 animate-slide-up bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg" style={{animationDelay: '0.6s'}}>
-                <div className="bg-[#90CAF9]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
-                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">100+</div>
-                <div className="text-sm sm:text-base text-gray-600">Happy Customers</div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -224,7 +256,9 @@ const HomePage = () => {
       {/* Featured Products Section */}
       <section id="featured" className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 sm:space-y-6 mb-8 sm:mb-12 lg:mb-16">
+          <div className={`text-center space-y-4 sm:space-y-6 mb-8 sm:mb-12 lg:mb-16 transition-all duration-700 ${
+            isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0F0F0F]">
               Featured Designs
             </h2>
@@ -242,8 +276,10 @@ const HomePage = () => {
               {featuredProducts.map((product, index) => (
                 <div 
                   key={product.id} 
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className={`transition-all duration-500 ${
+                    isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: `${0.8 + (index * 0.1)}s` }}
                 >
                   <ProductCard product={product} />
                 </div>
@@ -251,8 +287,10 @@ const HomePage = () => {
             </div>
           )}
 
-          {/* Fixed View All Products Button */}
-          <div className="text-center mt-8 sm:mt-12 lg:mt-16">
+          {/* View All Products Button */}
+          <div className={`text-center mt-8 sm:mt-12 lg:mt-16 transition-all duration-700 ${
+            isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '1.2s' }}>
             <Link 
               to="/products" 
               className="inline-flex items-center bg-gradient-to-r from-[#90CAF9] to-[#42A5F5] hover:from-[#42A5F5] hover:to-[#90CAF9] text-white text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group"
@@ -268,7 +306,9 @@ const HomePage = () => {
       <section className="py-12 sm:py-16 lg:py-20 bg-[#F9FAFB]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
-            <div className="space-y-6 sm:space-y-8 animate-slide-left order-2 lg:order-1">
+            <div className={`space-y-6 sm:space-y-8 order-2 lg:order-1 transition-all duration-700 ${
+              isAnimated ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
+            }`} style={{ transitionDelay: '1.4s' }}>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0F0F0F] text-center lg:text-left">
                 Why Choose OneSalt?
               </h2>
@@ -278,40 +318,33 @@ const HomePage = () => {
                 stands out from the crowd.
               </p>
               <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-start space-x-4 group hover:translate-x-2 transition-transform duration-300">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#90CAF9]/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-[#42A5F5]/20 transition-colors">
-                    <Award className="h-5 w-5 sm:h-6 sm:w-6 text-[#42A5F5]" />
+                {[
+                  { icon: Award, title: "Premium Materials", desc: "100% cotton blend for maximum comfort and durability" },
+                  { icon: Sparkles, title: "Unique Designs", desc: "Carefully crafted designs you won't find anywhere else" },
+                  { icon: TrendingUp, title: "Perfect Fit", desc: "Multiple sizes available for the perfect fit every time" }
+                ].map((feature, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-start space-x-4 group hover:translate-x-2 transition-transform duration-300"
+                  >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#90CAF9]/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-[#42A5F5]/20 transition-colors">
+                      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#42A5F5]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#0F0F0F] text-base sm:text-lg">{feature.title}</h3>
+                      <p className="text-gray-600 text-sm sm:text-base">{feature.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-[#0F0F0F] text-base sm:text-lg">Premium Materials</h3>
-                    <p className="text-gray-600 text-sm sm:text-base">100% cotton blend for maximum comfort and durability</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4 group hover:translate-x-2 transition-transform duration-300">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#90CAF9]/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-[#42A5F5]/20 transition-colors">
-                    <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-[#42A5F5]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#0F0F0F] text-base sm:text-lg">Unique Designs</h3>
-                    <p className="text-gray-600 text-sm sm:text-base">Carefully crafted designs you won't find anywhere else</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4 group hover:translate-x-2 transition-transform duration-300">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#90CAF9]/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-[#42A5F5]/20 transition-colors">
-                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-[#42A5F5]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#0F0F0F] text-base sm:text-lg">Perfect Fit</h3>
-                    <p className="text-gray-600 text-sm sm:text-base">Multiple sizes available for the perfect fit every time</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
             
             {/* Why Choose Image - Responsive on All Screens */}
-            <div className="text-center animate-slide-right order-1 lg:order-2">
+            <div className={`text-center order-1 lg:order-2 transition-all duration-700 ${
+              isAnimated ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+            }`} style={{ transitionDelay: '1.6s' }}>
               <div className="relative inline-block max-w-xs sm:max-w-sm lg:max-w-md mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#90CAF9] to-[#42A5F5] rounded-3xl transform rotate-3 lg:rotate-6"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#90CAF9] to-[#42A5F5] rounded-3xl transform rotate-2 lg:rotate-3"></div>
                 <img 
                   src={whyChooseImage} 
                   alt="Why Choose OneSalt" 
@@ -321,7 +354,7 @@ const HomePage = () => {
                     e.target.style.display = 'none';
                     e.target.parentElement.innerHTML = `
                       <div class="relative bg-white rounded-3xl shadow-2xl p-8 sm:p-12 transform hover:scale-105 transition-all duration-500">
-                        <div class="text-7xl sm:text-8xl lg:text-9xl text-center animate-float">👕</div>
+                        <div class="text-7xl sm:text-8xl lg:text-9xl text-center animate-float-gentle">👕</div>
                       </div>
                     `;
                   }}
@@ -332,51 +365,15 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Global Animation Styles */}
+      {/* Simplified Animation Styles */}
       <style jsx>{`
-        @keyframes float {
+        @keyframes floatGentle {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          50% { transform: translateY(-15px); }
         }
         
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideLeft {
-          from { opacity: 0; transform: translateX(20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes slideRight {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .animate-slide-up {
-          animation: slideUp 0.5s ease-out;
-        }
-        
-        .animate-slide-left {
-          animation: slideLeft 0.5s ease-out;
-        }
-        
-        .animate-slide-right {
-          animation: slideRight 0.5s ease-out;
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.5s ease-out;
+        .animate-float-gentle {
+          animation: floatGentle 8s ease-in-out infinite;
         }
       `}</style>
     </div>

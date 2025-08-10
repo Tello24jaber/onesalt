@@ -118,44 +118,10 @@ const ProductsPage = () => {
             </div>
 
             {/* Advanced Filters Button - Mobile */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 bg-gradient-to-r from-[#90CAF9] to-[#42A5F5] text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-              <span className="hidden sm:inline">Filters</span>
-            </button>
+            
           </div>
 
-          {/* Advanced Filters Panel - Collapsible */}
-          {showFilters && (
-            <div className="pt-4 border-t border-[#E5E7EB] space-y-4 animate-slide-down">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-[#0F0F0F] mb-2 block">
-                    Price Range
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      className="w-full px-3 py-2 border-2 border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#90CAF9]"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                    />
-                    <span className="text-gray-500">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      className="w-full px-3 py-2 border-2 border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#90CAF9]"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+         
         </div>
 
         {/* Results Count with Gradient Badge */}
@@ -232,14 +198,7 @@ const ProductsPage = () => {
               </div>
               
               {/* Back to Top Button for Mobile */}
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="fixed bottom-6 right-6 bg-gradient-to-r from-[#90CAF9] to-[#42A5F5] text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-40 md:hidden"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              </button>
+             
             </div>
           </>
         )}
