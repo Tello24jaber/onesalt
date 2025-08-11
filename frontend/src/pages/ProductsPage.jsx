@@ -197,7 +197,7 @@ const ProductsPage = () => {
                 <div className="w-2 h-2 bg-[#42A5F5] rounded-full animate-pulse"></div>
               </div>
               
-              {/* Back to Top Button for Mobile */}
+              
              
             </div>
           </>

@@ -1,15 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 
 // Check if environment variables are present
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
   console.error('Missing Supabase environment variables!');
   console.error('Please ensure SUPABASE_URL and SUPABASE_SERVICE_KEY are set in your .env file');
-  console.error('Current env vars:', {
-    SUPABASE_URL: process.env.SUPABASE_URL ? 'Set' : 'Not set',
-    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY ? 'Set' : 'Not set'
-  });
   process.exit(1);
 }
 
@@ -18,6 +14,21 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
+
+// Validate Google Maps link
+const validateGoogleMapsLink = (link) => {
+  if (!link) return false;
+  
+  // Check if it's a valid Google Maps link
+  const googleMapsPatterns = [
+    /^https:\/\/maps\.google\.com\/\?q=[\-\d.]+,[\-\d.]+$/,
+    /^https:\/\/www\.google\.com\/maps/,
+    /^https:\/\/goo\.gl\/maps/,
+    /^https:\/\/maps\.app\.goo\.gl/
+  ];
+  
+  return googleMapsPatterns.some(pattern => pattern.test(link));
+};
 
 // Create new order with items
 const createOrder = async (req, res) => {
@@ -29,7 +40,11 @@ const createOrder = async (req, res) => {
       city, 
       notes, 
       total_price,
-      items 
+      items,
+      location_link,
+      latitude,
+      longitude,
+      payment_method
     } = req.body;
 
     // Validation
@@ -44,6 +59,30 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ 
         success: false,
         message: 'Order must contain at least one item' 
+      });
+    }
+
+    // Validate location link
+    if (!location_link) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Delivery location is required. Please select a location on the map.' 
+      });
+    }
+
+    if (!validateGoogleMapsLink(location_link)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid location link format. Please use the map to select location.' 
+      });
+    }
+
+    // Validate payment method
+    const validPaymentMethods = ['cash', 'cliq'];
+    if (!payment_method || !validPaymentMethods.includes(payment_method)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid payment method. Must be either "cash" or "cliq"' 
       });
     }
 
@@ -109,6 +148,12 @@ const createOrder = async (req, res) => {
     // Generate order ID
     const orderId = uuidv4();
 
+    // Prepare map address from Google Maps link
+    let mapAddress = location_link;
+    if (latitude && longitude) {
+      mapAddress = `${location_link} (${latitude}, ${longitude})`;
+    }
+
     // Start transaction - Insert order first
     const orderData = {
       id: orderId,
@@ -120,6 +165,11 @@ const createOrder = async (req, res) => {
       total_price: calculatedTotal,
       shipping_fee: 0, // Free shipping
       status: 'pending',
+      location_link: location_link,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      map_address: mapAddress,
+      payment_method: payment_method,
       created_at: new Date().toISOString()
     };
 
@@ -188,6 +238,8 @@ const createOrder = async (req, res) => {
         notes: orderData.notes,
         total_price: orderData.total_price,
         status: orderData.status,
+        location_link: orderData.location_link,
+        payment_method: orderData.payment_method,
         items: orderItems.map(item => ({
           product_name: item.product_name,
           color: item.color,
@@ -213,7 +265,7 @@ const createOrder = async (req, res) => {
 // Get all orders (admin)
 const getAllOrders = async (req, res) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query;
+    const { status, payment_method, limit = 50, offset = 0 } = req.query;
 
     let query = supabase
       .from('orders')
@@ -226,6 +278,10 @@ const getAllOrders = async (req, res) => {
 
     if (status) {
       query = query.eq('status', status);
+    }
+
+    if (payment_method) {
+      query = query.eq('payment_method', payment_method);
     }
 
     const { data, error } = await query;
@@ -361,9 +417,64 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Update payment status (admin)
+const updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { payment_method } = req.body;
+
+    const validMethods = ['cash', 'cliq'];
+    
+    if (!validMethods.includes(payment_method)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Invalid payment method. Must be one of: ${validMethods.join(', ')}` 
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ payment_method })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Order not found' 
+        });
+      }
+      
+      console.error('Error updating payment method:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to update payment method',
+        error: error.message 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Payment method updated successfully',
+      data
+    });
+
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getAllOrders,
   getOrderById,
-  updateOrderStatus
+  updateOrderStatus,
+  updatePaymentStatus
 };

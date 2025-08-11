@@ -47,8 +47,10 @@ const Footer = () => {
           <div className="space-y-6">
             <h3 className="text-xl font-bold">Contact</h3>
             <div className="text-gray-300 space-y-2">
-              <p>Email: hello@onesalt.com</p>
-              <p>Support: support@onesalt.com</p>
+              <p>wearonesalt@gmail.com</p>
+             <a href="https://www.instagram.com/wearonesalt?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" className="text-gray-300 hover:text-primary transition-colors duration-300 hover:underline">
+                  Instagram
+                </a>
             </div>
           </div>
         </div>

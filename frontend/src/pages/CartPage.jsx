@@ -142,7 +142,7 @@ const CartPage = () => {
           </Link>
           <Link
             to="/checkout"
-            className="flex items-center justify-center bg-[#90CAF9] text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-300"
+            className="flex items-center justify-center bg-[#333bd0] text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-300"
           >
             Proceed to Checkout
             <ArrowRight className="ml-2 h-5 w-5" />

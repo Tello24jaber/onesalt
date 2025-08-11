@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Save, Plus, Edit2, Trash2, 
   Receipt, User, MapPin, Phone, 
-  MessageSquare, X 
+  MessageSquare, X , DollarSign, Smartphone, ExternalLink 
 } from 'lucide-react';
 import { adminAPI } from '../services/api';
 import { format } from 'date-fns';
@@ -373,6 +373,71 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
+
+      
+<div className="bg-white rounded-lg shadow p-6 mb-6">
+  <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment & Delivery</h2>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Payment Method */}
+    <div>
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+        {order.payment_method === 'cash' ? <DollarSign size={16} /> : <Smartphone size={16} />}
+        Payment Method
+      </label>
+      <div className="flex items-center gap-2">
+        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+          order.payment_method === 'cash' 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-purple-100 text-purple-800'
+        }`}>
+          {order.payment_method === 'cash' ? 'Cash on Delivery' : 'CliQ Transfer'}
+        </span>
+      </div>
+    </div>
+
+    {/* Delivery Location */}
+    <div>
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+        <MapPin size={16} />
+        Delivery Location
+      </label>
+      {order.location_link ? (
+        <a 
+          href={order.location_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
+        >
+          <span>View on Google Maps</span>
+          <ExternalLink size={14} />
+        </a>
+      ) : order.latitude && order.longitude ? (
+        <a 
+          href={`https://maps.google.com/?q=${order.latitude},${order.longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
+        >
+          <span>View on Google Maps</span>
+          <ExternalLink size={14} />
+        </a>
+      ) : (
+        <span className="text-gray-500">No location provided</span>
+      )}
+    </div>
+
+    {/* Map Address if available */}
+    {order.map_address && (
+      <div className="md:col-span-2">
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Map Address Details
+        </label>
+        <p className="text-gray-900 text-sm bg-gray-50 p-2 rounded">{order.map_address}</p>
+      </div>
+    )}
+  </div>
+</div>
 
       {/* Order Items */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">

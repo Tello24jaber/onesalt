@@ -100,7 +100,7 @@ const ThankYouPage = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Shipping</span>
-                <span className="text-green-600">Free</span>
+                <span className="text-red-600">Depends on your location</span>
               </div>
               <div className="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
                 <span>Order Total</span>
@@ -134,7 +134,7 @@ const ThankYouPage = () => {
           {/* Receipt Footer */}
           <div className="bg-gray-50 px-6 py-4 text-center">
             <p className="text-xs text-gray-500">
-              Thank you for your purchase! • support@onesalt.jo
+              Thank you for your purchase! • wearonesalt@gmail.com
             </p>
           </div>
         </div>
