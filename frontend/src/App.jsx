@@ -29,30 +29,7 @@ function App() {
           <div className="flex flex-col min-h-screen">
             <Header />
             
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/:slug" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/thank-you" element={<ThankYouPage />} />
-                
-                {/* 404 Page */}
-                <Route path="*" element={
-                  <div className="min-h-screen flex items-center justify-center bg-background page-transition">
-                    <div className="text-center space-y-6">
-                      <div className="text-8xl animate-bounce-gentle">🔍</div>
-                      <h1 className="text-5xl font-bold text-text">404</h1>
-                      <p className="text-gray-600 text-xl">Page not found</p>
-                      <a href="/" className="btn-primary">
-                        Go Home
-                      </a>
-                    </div>
-                  </div>
-                } />
-              </Routes>
-            </main>
+            
             
             <Footer />
             
