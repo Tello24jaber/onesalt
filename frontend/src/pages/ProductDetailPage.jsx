@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Heart, Star } from 'lucide-react';
 import { productsAPI } from '../services/api';
-import { useCart } from '../context/CartContext'; // FIXED import path
+import { useCart } from '../context/ontext'; // FIXED import path
 import { PageLoader } from '../components/loadingSpinner';
 import { toast } from 'react-toastify';
 
