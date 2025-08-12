@@ -521,7 +521,7 @@ const CheckoutPage = () => {
                     <div className="flex items-center justify-between mb-2">
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                         <Navigation className="h-4 w-4" />
-                        Share Precise Location 
+                        Share Precise Location (optional but recommended)
                       </label>
                       <button
                         type="button"
