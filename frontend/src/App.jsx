@@ -22,7 +22,7 @@ import ThankYouPage from './pages/ThankYouPage';
 import ErrorBoundary from './components/ErrorBoundary';
 function App() {
   return (
-   
+    <ErrorBoundary>
       <CartProvider>
         <Router>
           <ScrollToTop />
