@@ -13,7 +13,7 @@ const CheckoutPage = () => {
   const { items, totalItems, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  setLocationCopied(true);
+ 
   // Jordanian cities list
   const jordanianCities = [
     'amman', 'zarqa', 'irbid', 'russeifa', 'quwaysimah', 'wadi as sir', 'tilaa al ali',
