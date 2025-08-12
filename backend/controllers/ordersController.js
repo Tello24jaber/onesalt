@@ -62,15 +62,9 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Validate location link
-    if (!location_link) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Delivery location is required. Please select a location on the map.' 
-      });
-    }
+   
 
-    if (!validateGoogleMapsLink(location_link)) {
+    if (location_link && !validateGoogleMapsLink(location_link)){
       return res.status(400).json({ 
         success: false,
         message: 'Invalid location link format. Please use the map to select location.' 
