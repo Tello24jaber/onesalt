@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Heart, Star } from 'lucide-react';
 import { productsAPI } from '../services/api';
-import { useCart } from '../context/ontext'; // FIXED import path
+import { useCart } from '../context/CartContext'; // FIXED import path
 import { PageLoader } from '../components/loadingSpinner';
 import { toast } from 'react-toastify';
 
@@ -19,12 +19,19 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
+  // Prevent scroll to bottom on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const fetchProduct = async () => {
       if (!slug) return;
       
       try {
         setLoading(true);
+        // Scroll to top when loading starts
+        window.scrollTo(0, 0);
         const response = await productsAPI.getBySlug(slug);
         const productData = response.data;
         
@@ -177,7 +184,9 @@ const ProductDetailPage = () => {
                 <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                   {product.name}
                 </h1>
-               
+                <button className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 group">
+                  <Heart className="h-6 w-6 text-gray-400 group-hover:text-red-500 group-hover:fill-current transition-colors duration-300" />
+                </button>
               </div>
               
               <div className="flex items-center space-x-4">
