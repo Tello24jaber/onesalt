@@ -11,7 +11,7 @@ import Header from './components/header';
 import Footer from './components/footer';
 
 // Pages
-import HomePage from './pages/HomePage';
+import HomePage from './pages/Homepage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
