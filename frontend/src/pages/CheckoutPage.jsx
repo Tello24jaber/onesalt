@@ -13,7 +13,7 @@ const CheckoutPage = () => {
   const { items, totalItems, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  setLocationCopied(true);
   // Jordanian cities list
   const jordanianCities = [
     'amman', 'zarqa', 'irbid', 'russeifa', 'quwaysimah', 'wadi as sir', 'tilaa al ali',
@@ -291,39 +291,44 @@ const CheckoutPage = () => {
     setCaptcha(prev => ({ ...prev, userAnswer: e.target.value }));
   };
 
-  const validateForm = () => {
-    const required = ['name', 'phone', 'address', 'city'];
-    const missing = required.filter(field => !customerForm[field].trim());
-    
-    if (missing.length > 0) {
-      toast.error(`Please fill in: ${missing.join(', ')}`);
-      return false;
-    }
+  // ...existing code...
+const validateForm = () => {
+  const required = ['name', 'phone', 'address', 'city'];
+  const missing = required.filter(field => !customerForm[field].trim());
+
+  if (missing.length > 0) {
+    toast.error(`Please fill in: ${missing.join(', ')}`);
+    return false;
+  }
+
+
+
+  // ...existing validation checks...
+  if (!validation.phone.isValid) {
+    toast.error('Please enter a valid Jordanian phone number (07XXXXXXXX)');
+    return false;
+  }
+  if (!validation.address.isValid) {
+    toast.error('Please enter a valid address');
+    return false;
+  }
+  if (!validation.city.isValid) {
+    toast.error('Please enter a valid city name');
+    return false;
+  }
+
+  // Check captcha
+  if (parseInt(captcha.userAnswer) !== captcha.correctAnswer) {
+    toast.error('Please solve the math question correctly');
+    return false;
+  }
+
+  return true;
+};
+// ...existing code...
 
     
-
-    // Check individual field validations
-    if (!validation.phone.isValid) {
-      toast.error('Please enter a valid Jordanian phone number (07XXXXXXXX)');
-      return false;
-    }
-    if (!validation.address.isValid) {
-      toast.error('Please enter a valid address');
-      return false;
-    }
-    if (!validation.city.isValid) {
-      toast.error('Please enter a valid city name');
-      return false;
-    }
-
-    // Check captcha
-    if (parseInt(captcha.userAnswer) !== captcha.correctAnswer) {
-      toast.error('Please solve the math question correctly');
-      return false;
-    }
     
-    return true;
-  };
 
   const handleCheckout = async (e) => {
     e.preventDefault();
@@ -521,7 +526,7 @@ const CheckoutPage = () => {
                     <div className="flex items-center justify-between mb-2">
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                         <Navigation className="h-4 w-4" />
-                        Share Precise Location (Optional but recommended)
+                        Share Precise Location 
                       </label>
                       <button
                         type="button"
