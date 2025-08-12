@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Users, Shirt, Sparkles, TrendingUp, Award } from 'lucide-react';
 import { productsAPI } from '../services/api';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/productcard';
 import LoadingSpinner from '../components/loadingSpinner';
 import { toast } from 'react-toastify';
 import whyChooseImage from '../images/hero-bg.png';

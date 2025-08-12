@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, SlidersHorizontal, X } from 'lucide-react';
 import { productsAPI } from '../services/api';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/productcard';
 import { PageLoader } from '../components/loadingSpinner';
 import { toast } from 'react-toastify';
 
