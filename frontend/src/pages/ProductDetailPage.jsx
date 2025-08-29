@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Heart, Star } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Heart, Star, Ruler, Info } from 'lucide-react';
 import { productsAPI } from '../services/api';
-import { useCart } from '../context/ontext'; // FIXED import path
+import { useCart } from '../context/ontext';
 import { PageLoader } from '../components/loadingSpinner';
 import { toast } from 'react-toastify';
 
@@ -13,11 +13,22 @@ const ProductDetailPage = () => {
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState(''); // No default selection
+  const [selectedSize, setSelectedSize] = useState('');   // No default selection
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
+  // Size measurements in centimeters
+  const sizeMeasurements = {
+    'S': { length: 69, chestWidth: 56, shoulderWidth: 59, sleeveLength: 21 },
+    'M': { length: 71, chestWidth: 58, shoulderWidth: 61, sleeveLength: 22 },
+    'L': { length: 73, chestWidth: 60, shoulderWidth: 63, sleeveLength: 23 },
+    'XL': { length: 73.5, chestWidth: 63, shoulderWidth: 65.5, sleeveLength: 23.5 }
+  };
+
+  const selectedSizeMeasurements = selectedSize ? sizeMeasurements[selectedSize] : null;
 
   // Prevent scroll to bottom on mount
   useEffect(() => {
@@ -37,13 +48,8 @@ const ProductDetailPage = () => {
         
         setProduct(productData);
         
-        // Set default selections
-        if (productData.colors && productData.colors.length > 0) {
-          setSelectedColor(productData.colors[0]);
-        }
-        if (productData.sizes && productData.sizes.length > 0) {
-          setSelectedSize(productData.sizes[0]);
-        }
+        // NO default selections - user must choose
+        
       } catch (error) {
         console.error('Error fetching product:', error);
         toast.error('Product not found');
@@ -60,8 +66,8 @@ const ProductDetailPage = () => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'JOD',
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2, 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2, 
     }).format(price);
   };
 
@@ -149,7 +155,7 @@ const ProductDetailPage = () => {
                 alt={product.name}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 onError={(e) => {
-                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjlGQUZCIi8+CjxwYXRoIGQ9Ik0yNTAgMTUwQzIyMC4xNDcgMTUwIDIwMCAxNzAuMTQ3IDIwMCAyMDBWMzAwQzIwMCAzMjkuODUzIDIyMC4xNDcgMzUwIDI1MCAzNTBTMzAwIDMyOS44NTMgMzAwIDMwMFYyMDBDMzAwIDE3MC4xNDcgMjc5Ljg1MyAxNTAgMjUwIDE1MFoiIGZpbGw9IiM5MENBRZKII8+CjwvZz4K';
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiBmaWxsPSIjRjlGQUZCIi8+CjxwYXRoIGQ9Ik0yNTAgMTUwQzIyMC4xNDcgMTUwIDIwMCAxNzAuMTQ3IDIwMCAyMDBWMzAwQzIwMCAzMjkuODUzIDIyMC4xNDcgMzUwIDI1MCAzNTBTMzAwIDMyOS44NTMgMzAwIDMwMFYyMDBDMzAwIDE3MC4xNDcgMjc5Ljg1MyAxNTAgMjUwIDE1MFoiIGZpbGw9IiM5MENBRSKII8+CjwvZz4K';
                 }}
               />
             </div>
@@ -214,7 +220,7 @@ const ProductDetailPage = () => {
               {product.colors && product.colors.length > 0 && (
                 <div className="space-y-3">
                   <label className="block text-lg font-semibold text-gray-900">
-                    Color: <span className="text-blue-300">{selectedColor}</span>
+                    Color: {selectedColor ? <span className="text-blue-300">{selectedColor}</span> : <span className="text-gray-400">Please select</span>}
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => (
@@ -234,12 +240,22 @@ const ProductDetailPage = () => {
                 </div>
               )}
 
-              {/* Size Selection */}
+              {/* Size Selection with Measurements */}
               {product.sizes && product.sizes.length > 0 && (
                 <div className="space-y-3">
-                  <label className="block text-lg font-semibold text-gray-900">
-                    Size: <span className="text-blue-300">{selectedSize}</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-lg font-semibold text-gray-900">
+                      Size: {selectedSize ? <span className="text-blue-300">{selectedSize}</span> : <span className="text-gray-400">Please select</span>}
+                    </label>
+                    <button
+                      onClick={() => setShowSizeChart(!showSizeChart)}
+                      className="flex items-center text-sm text-blue-300 hover:text-blue-500 transition-colors"
+                    >
+                      <Ruler className="h-4 w-4 mr-1" />
+                      Size Guide
+                    </button>
+                  </div>
+                  
                   <div className="flex flex-wrap gap-3">
                     {product.sizes.map((size) => (
                       <button
@@ -254,6 +270,91 @@ const ProductDetailPage = () => {
                         {size}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Size Measurements Display */}
+                  {selectedSizeMeasurements && (
+                    <div className="bg-blue-50 rounded-xl p-4 mt-4">
+                      <div className="flex items-center mb-3">
+                        <Ruler className="h-5 w-5 text-blue-600 mr-2" />
+                        <h4 className="font-semibold text-gray-900">Size {selectedSize} Measurements</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Length:</span>
+                          <span className="font-medium">{selectedSizeMeasurements.length} cm</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Chest Width:</span>
+                          <span className="font-medium">{selectedSizeMeasurements.chestWidth} cm</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Shoulder Width:</span>
+                          <span className="font-medium">{selectedSizeMeasurements.shoulderWidth} cm</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sleeve Length:</span>
+                          <span className="font-medium">{selectedSizeMeasurements.sleeveLength} cm</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Full Size Chart */}
+                  {showSizeChart && (
+                    <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900">Size Chart (cm)</h4>
+                        <button
+                          onClick={() => setShowSizeChart(false)}
+                          className="text-gray-400 hover:text-gray-600 text-xl"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-2 font-semibold">Size</th>
+                              <th className="text-center py-2 font-semibold">Length</th>
+                              <th className="text-center py-2 font-semibold">Chest Width</th>
+                              <th className="text-center py-2 font-semibold">Shoulder Width</th>
+                              <th className="text-center py-2 font-semibold">Sleeve Length</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {product.sizes.map((size) => (
+                              <tr
+                                key={size}
+                                className={`border-b border-gray-100 ${
+                                  selectedSize === size ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                }`}
+                              >
+                                <td className="py-2 font-medium">{size}</td>
+                                <td className="py-2 text-center">{sizeMeasurements[size]?.length}</td>
+                                <td className="py-2 text-center">{sizeMeasurements[size]?.chestWidth}</td>
+                                <td className="py-2 text-center">{sizeMeasurements[size]?.shoulderWidth}</td>
+                                <td className="py-2 text-center">{sizeMeasurements[size]?.sleeveLength}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selection Warning */}
+              {(!selectedColor || !selectedSize) && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                  <div className="flex items-start">
+                    <Info className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div className="text-orange-800 text-sm">
+                      <p className="font-medium">Please make your selections</p>
+                      <p>Choose both color and size before adding to cart.</p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -293,7 +394,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Cart Management */}
-            {currentCartQuantity > 0 && (
+            {currentCartQuantity > 0 && selectedColor && selectedSize && (
               <div className="bg-blue-50 rounded-2xl p-6 space-y-4">
                 <h3 className="font-semibold text-gray-900">In Your Cart</h3>
                 <div className="flex items-center justify-between">

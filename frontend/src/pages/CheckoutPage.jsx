@@ -4,14 +4,11 @@ import {
   Navigation, DollarSign, Smartphone, Shield, Copy, Check
 } from 'lucide-react';
 
+import { useCart } from '../context/ontext';
+
 const CheckoutPage = () => {
-  // Mock cart data for demonstration
-  const items = [
-    { id: '1', name: 'Classic T-Shirt', color: 'Black', size: 'M', price: 15.99, quantity: 2 },
-    { id: '2', name: 'Premium Hoodie', color: 'White', size: 'L', price: 25.99, quantity: 1 }
-  ];
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+ 
+  const { items, totalItems, totalPrice, clearCart } = useCart();
   
   const [isProcessing, setIsProcessing] = useState(false);
  
@@ -70,6 +67,8 @@ const CheckoutPage = () => {
     address: { isValid: null, message: '' }
   });
 
+  
+
   // Calculate delivery fee based on selected city
   const getDeliveryFee = () => {
     const selectedCity = jordanianCities.find(city => city.name === customerForm.city);
@@ -78,7 +77,7 @@ const CheckoutPage = () => {
 
   // Calculate total price including delivery
   const getTotalPrice = () => {
-    return subtotalPrice + getDeliveryFee();
+    return totalPrice + getDeliveryFee();
   };
 
   // Generate simple math captcha
@@ -116,7 +115,7 @@ const CheckoutPage = () => {
     });
   };
 
-  // Get current location (FREE - no API key needed)
+  // Get current location
   const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
@@ -294,13 +293,61 @@ const CheckoutPage = () => {
   const handleCheckout = async () => {
     if (!validateForm()) return;
     
+    // Additional check to ensure cart isn't empty at checkout time
+    if (!items || items.length === 0) {
+      alert('Your cart is empty. Please add some items first.');
+      window.location.href = '/products';
+      return;
+    }
+    
     try {
       setIsProcessing(true);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      alert('Order placed successfully! We will call you soon.');
+      // Create order data FIRST while cart still has items
+      const orderData = {
+        order_id: 'ORD' + Date.now(),
+        customer_name: customerForm.name,
+        phone: customerForm.phone,
+        address: customerForm.address,
+        city: customerForm.city,
+        created_at: new Date().toISOString(),
+        notes: customerForm.notes || '',
+        items: items.map(item => ({
+          product_name: item.name,
+          color: item.color,
+          size: item.size,
+          quantity: item.quantity,
+          unit_price: item.price,
+          subtotal: item.price * item.quantity
+        })),
+        subtotal_price: totalPrice,
+        delivery_fee: getDeliveryFee(),
+        total_price: getTotalPrice(),
+        payment_method: customerForm.payment_method
+      };
+      
+      // Store order data with timestamp BEFORE clearing cart
+      const orderWithTimestamp = {
+        ...orderData,
+        timestamp: Date.now()
+      };
+      
+      // Store in sessionStorage first
+      sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
+      
+      // Wait a moment to ensure storage is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // NOW clear the cart after order is safely stored
+      clearCart();
+      
+      // Wait another moment before redirect
+      setTimeout(() => {
+        window.location.href = '/thank-you';
+      }, 200);
       
     } catch (error) {
       console.error('Error during checkout:', error);
@@ -309,6 +356,18 @@ const CheckoutPage = () => {
       setIsProcessing(false);
     }
   };
+
+  // Don't render if cart is empty
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -424,8 +483,8 @@ const CheckoutPage = () => {
                   </div>
 
                   {/* Location Button */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                         <Navigation className="h-4 w-4" />
                         Share Precise Location (optional but recommended)
@@ -434,7 +493,7 @@ const CheckoutPage = () => {
                         type="button"
                         onClick={getCurrentLocation}
                         disabled={locationLoading}
-                        className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors flex items-center gap-2"
+                        className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
                       >
                         {locationLoading ? (
                           <>
@@ -485,7 +544,7 @@ const CheckoutPage = () => {
                       value={customerForm.notes}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none transition-colors resize-none"
+                      className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-400 focus:outline-none transition-colors resize-none text-base"
                       placeholder="Landmark, special delivery instructions, etc..."
                     />
                   </div>
@@ -593,7 +652,7 @@ const CheckoutPage = () => {
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600 text-sm sm:text-base">Subtotal ({totalItems} items)</span>
-                  <span className="font-semibold text-sm sm:text-base">{formatPrice(subtotalPrice)}</span>
+                  <span className="font-semibold text-sm sm:text-base">{formatPrice(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600 text-sm sm:text-base">Delivery Fee</span>
@@ -623,7 +682,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between items-center text-lg sm:text-xl font-bold text-gray-900 pt-4 border-t border-gray-200">
                   <span>Total</span>
                   <span className="text-blue-400">
-                    {customerForm.city ? formatPrice(getTotalPrice()) : formatPrice(subtotalPrice)}
+                    {customerForm.city ? formatPrice(getTotalPrice()) : formatPrice(totalPrice)}
                   </span>
                 </div>
                 {!customerForm.city && (
@@ -657,7 +716,7 @@ const CheckoutPage = () => {
                   <span className="text-base sm:text-lg">📞</span>
                   <div className="text-xs sm:text-xs text-gray-700">
                     <strong>Quick Confirmation:</strong>
-                    <p className="mt-1">We'll call you within 30 minutes to confirm your order and schedule delivery.</p>
+                    <p className="mt-1">We'll call you within one day to confirm your order and schedule delivery.</p>
                   </div>
                 </div>
                 
@@ -675,7 +734,7 @@ const CheckoutPage = () => {
                     <strong>Quality Guarantee:</strong>
                     <p className="mt-1">100% authentic products with return policy</p>
                   </div>
-                </div>
+                  </div>
               </div>
             </div>
           </div>

@@ -1,38 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle, Home, Package } from 'lucide-react';
 
 const ThankYouPage = () => {
-  // Mock order data for demonstration
-  const orderData = {
-    order_id: '12345abc',
-    customer_name: 'John Doe',
-    phone: '0791234567',
-    address: '123 Main Street, Building 5, Floor 2',
-    city: 'Amman',
-    created_at: new Date().toISOString(),
-    notes: 'Please call when you arrive',
-    items: [
-      {
-        product_name: 'Classic T-Shirt',
-        color: 'Black',
-        size: 'M',
-        quantity: 2,
-        unit_price: 15.99,
-        subtotal: 31.98
-      },
-      {
-        product_name: 'Premium Hoodie',
-        color: 'White',
-        size: 'L',
-        quantity: 1,
-        unit_price: 25.99,
-        subtotal: 25.99
+  const [orderData, setOrderData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Small delay to prevent immediate redirect issues
+    const timer = setTimeout(() => {
+      // Get order data from sessionStorage
+      const storedOrderData = sessionStorage.getItem('orderData');
+      
+      if (storedOrderData) {
+        try {
+          const parsedOrderData = JSON.parse(storedOrderData);
+          
+          // Check if data is recent (within last 10 minutes) to prevent stale data
+          const now = Date.now();
+          const dataAge = now - (parsedOrderData.timestamp || 0);
+          const tenMinutes = 10 * 60 * 1000;
+          
+          if (dataAge < tenMinutes) {
+            setOrderData(parsedOrderData);
+            // Clear the order data from sessionStorage after successfully reading it
+            sessionStorage.removeItem('orderData');
+          } else {
+            // Data is too old, redirect to home
+            console.log('Order data is stale, redirecting to home');
+            window.location.href = '/';
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing order data:', error);
+          // Redirect to home if parsing fails
+          window.location.href = '/';
+          return;
+        }
+      } else {
+        // No order data found, redirect to home
+        console.log('No order data found, redirecting to home');
+        window.location.href = '/';
+        return;
       }
-    ],
-    subtotal_price: 57.97,
-    delivery_fee: 2.00, // This will be based on the city selected
-    total_price: 59.97
-  };
+      
+      setLoading(false);
+    }, 500); // 500ms delay to prevent immediate redirect
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
@@ -66,6 +81,31 @@ const ThankYouPage = () => {
       };
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!orderData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Redirecting to homepage...</p>
+        </div>
+      </div>
+    );
+  }
+
+  
+
+  
 
   const deliveryInfo = getDeliveryInfo(orderData.city);
 
@@ -153,7 +193,7 @@ const ThankYouPage = () => {
                 <div className="text-sm">
                   <p className="font-semibold text-gray-900 mb-1">What's Next?</p>
                   <p className="text-gray-600 mb-2">
-                    We'll confirm your order via WhatsApp/phone within 30 minutes.
+                    We'll confirm your order via WhatsApp/phone within one day.
                   </p>
                   <div className="text-xs text-gray-600 space-y-1">
                     <p><strong>Delivery:</strong> 1-3 business days</p>

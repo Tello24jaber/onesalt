@@ -8,6 +8,56 @@ import { toast } from 'react-toastify';
 import whyChooseImage from '../images/hero-bg.png';
 import heroBackground from '../images/herobg.png';
 
+const AnimatedCounter = ({ 
+  endValue = 100, 
+  duration = 2000, 
+  delay = 0, 
+  suffix = "+",
+  className = "" 
+}) => {
+  const [currentValue, setCurrentValue] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    if (hasAnimated) return;
+
+    const startAnimation = () => {
+      setHasAnimated(true);
+      
+      const startTime = Date.now();
+      const startValue = 0;
+      
+      const animateCount = () => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Use easeOutCubic for smoother animation
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const value = Math.floor(startValue + (endValue - startValue) * easeOutCubic);
+        
+        setCurrentValue(value);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateCount);
+        } else {
+          setCurrentValue(endValue);
+        }
+      };
+      
+      requestAnimationFrame(animateCount);
+    };
+
+    const timer = setTimeout(startAnimation, delay);
+    return () => clearTimeout(timer);
+  }, [endValue, duration, delay, hasAnimated]);
+
+  return (
+    <span className={className}>
+      {currentValue}{suffix}
+    </span>
+  );
+};
 // Enhanced Minimal Splash Screen Component
 const SplashScreen = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -229,23 +279,34 @@ Premium streetwear bold, comfy
 
             {/* Stats - Improved Mobile Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-8 sm:pt-12 max-w-3xl mx-auto px-4">
-              {[
-                { icon: Shirt, value: "4+", label: "Unique Designs", delay: "0.2s" },
-                { icon: Star, value: "Premium", label: "Quality", delay: "0.4s" },
-                { icon: Users, value: "100+", label: "Happy Customers", delay: "0.6s" }
-              ].map((stat, index) => (
+             {[
+  { icon: Shirt, value: 4, suffix: "+", label: "Unique Designs", delay: 200 },
+  { icon: Star, value: "Premium", suffix: "", label: "Quality", delay: 400 },
+  { icon: Users, value: 100, suffix: "+", label: "Happy Customers", delay: 600 }
+].map((stat, index) => (
                 <div 
                   key={index}
                   className={`text-center space-y-2 sm:space-y-3 bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg transition-all duration-500 ${
                     isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
-                  style={{transitionDelay: stat.delay}}
+                 style={{transitionDelay: `${stat.delay - 200}ms`}}
                 >
                   <div className="bg-[#90CAF9]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
                     <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">{stat.value}</div>
-                  <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
+                  
+<div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">
+  {typeof stat.value === 'number' ? (
+    <AnimatedCounter
+      endValue={stat.value}
+      duration={2000}
+      delay={stat.delay}
+      suffix={stat.suffix}
+    />
+  ) : (
+    stat.value
+  )}
+</div><div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
                 </div>
               ))}
             </div>
