@@ -198,7 +198,7 @@ const ThankYouPage = () => {
                   <div className="text-xs text-gray-600 space-y-1">
                     <p><strong>Delivery:</strong> 1-3 business days</p>
                     <p><strong>Fee:</strong> {formatPrice(deliveryInfo.fee)} for {orderData.city}</p>
-                    <p><strong>Payment:</strong> Cash on delivery</p>
+                    
                   </div>
                 </div>
               </div>
