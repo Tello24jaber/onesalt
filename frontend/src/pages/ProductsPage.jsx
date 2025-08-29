@@ -75,8 +75,9 @@ const ProductsPage = () => {
             Our Collection
           </h1>
           <p className="relative text-gray-600 max-w-2xl mx-auto text-lg">
-            Discover our complete range of premium t-shirts with unique designs
-          </p>
+            Discover our complete range of premium   </p>            
+           <p className="relative text-gray-600 max-w-2xl mx-auto text-lg"> t-shirts with unique designs</p>
+        
         </div>
 
         {/* Search and Filter Bar - Mobile Optimized */}

@@ -59,7 +59,9 @@ const ProductDetailPage = () => {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'JOD',
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2, 
     }).format(price);
   };
 
@@ -188,7 +190,7 @@ const ProductDetailPage = () => {
               </div>
               
               <div className="flex items-center space-x-4">
-                <span className="text-3xl font-bold text-blue-600">
+                <span className="text-3xl font-bold text-blue-300">
                   {formatPrice(product.price)}
                 </span>
                 <div className="flex items-center space-x-1">
@@ -212,7 +214,7 @@ const ProductDetailPage = () => {
               {product.colors && product.colors.length > 0 && (
                 <div className="space-y-3">
                   <label className="block text-lg font-semibold text-gray-900">
-                    Color: <span className="text-blue-600">{selectedColor}</span>
+                    Color: <span className="text-blue-300">{selectedColor}</span>
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => (
@@ -221,7 +223,7 @@ const ProductDetailPage = () => {
                         onClick={() => setSelectedColor(color)}
                         className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                           selectedColor === color
-                            ? 'bg-blue-500 text-white shadow-lg ring-4 ring-blue-200'
+                            ? 'bg-blue-300 text-white shadow-lg ring-4 ring-blue-200'
                             : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300 hover:shadow-md'
                         }`}
                       >
@@ -236,7 +238,7 @@ const ProductDetailPage = () => {
               {product.sizes && product.sizes.length > 0 && (
                 <div className="space-y-3">
                   <label className="block text-lg font-semibold text-gray-900">
-                    Size: <span className="text-blue-600">{selectedSize}</span>
+                    Size: <span className="text-blue-300">{selectedSize}</span>
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {product.sizes.map((size) => (
@@ -245,7 +247,7 @@ const ProductDetailPage = () => {
                         onClick={() => setSelectedSize(size)}
                         className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                           selectedSize === size
-                            ? 'bg-blue-500 text-white shadow-lg ring-4 ring-blue-200'
+                            ? 'bg-blue-300 text-white shadow-lg ring-4 ring-blue-200'
                             : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300 hover:shadow-md'
                         }`}
                       >
@@ -308,7 +310,7 @@ const ProductDetailPage = () => {
                     <span className="font-semibold w-8 text-center">{currentCartQuantity}</span>
                     <button
                       onClick={handleCartIncrement}
-                      className="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 flex items-center justify-center"
+                      className="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-300 transition-all duration-200 flex items-center justify-center"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -322,7 +324,7 @@ const ProductDetailPage = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart || !selectedColor || !selectedSize}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-8 rounded-xl font-semibold text-lg shadow-lg hover:from-blue-600 hover:to-blue-700 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center"
+                className="flex-1 bg-gradient-to-r from-blue-300 to-blue-400 text-white py-4 px-8 rounded-xl font-semibold text-lg shadow-lg hover:from-blue-600 hover:to-blue-700 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center"
               >
                 {isAddingToCart ? (
                   <>
@@ -339,7 +341,7 @@ const ProductDetailPage = () => {
               
               <Link
                 to="/cart"
-                className="sm:flex-shrink-0 bg-white text-blue-600 py-4 px-8 rounded-xl font-semibold text-lg border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 flex items-center justify-center transform hover:scale-[1.02] active:scale-[0.98]"
+                className="sm:flex-shrink-0 bg-white text-blue-300 py-4 px-8 rounded-xl font-semibold text-lg border-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 flex items-center justify-center transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 View Cart ({currentCartQuantity})
               </Link>
@@ -351,15 +353,12 @@ const ProductDetailPage = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">100% Premium Cotton</span>
+                  <span className="text-gray-700">85% Premium Cotton</span>
                 </div>
+                
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">Machine Washable</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">Comfortable Fit</span>
+                  <span className="text-gray-700">Oversized Fit</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>

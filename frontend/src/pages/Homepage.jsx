@@ -29,8 +29,8 @@ const SplashScreen = ({ onComplete }) => {
         {/* Logo Text with Animation */}
         <div className="relative">
           <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight animate-fade-in-up">
-            <span className="text-[#0F0F0F]">One</span>
-            <span className="text-[#90CAF9]">Salt</span>
+            <span className="text-[#0F0F0F]">one</span>
+            <span className="text-[#90CAF9]">salt</span>
           </h1>
           
           {/* Subtle underline animation */}
@@ -203,11 +203,11 @@ const HomePage = () => {
             {/* Main Heading - Responsive Sizing */}
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white drop-shadow-2xl">
-                One<span className="text-[#90CAF9]">Salt</span>
+                one<span className="text-[#90CAF9]">salt</span>
               </h1>
-              <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg px-4">
-                Premium t-shirt collection featuring unique designs crafted with style and comfort in mind
-              </p>
+              <p className="text-lg sm:text-l lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg px-4">
+Premium streetwear bold, comfy
+ and made for your vibe</p>
             </div>
 
             {/* CTA Buttons - Better Mobile Spacing */}
@@ -310,7 +310,7 @@ const HomePage = () => {
               isAnimated ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
             }`} style={{ transitionDelay: '1.4s' }}>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0F0F0F] text-center lg:text-left">
-                Why Choose OneSalt?
+                Why Choose onesalt?
               </h2>
               <p className="text-gray-600 text-base sm:text-lg leading-relaxed text-center lg:text-left">
                 We believe in creating more than just clothing. Each OneSalt t-shirt 
@@ -319,7 +319,7 @@ const HomePage = () => {
               </p>
               <div className="space-y-4 sm:space-y-6">
                 {[
-                  { icon: Award, title: "Premium Materials", desc: "100% cotton blend for maximum comfort and durability" },
+                  { icon: Award, title: "Premium Materials", desc: "French Cotton 85% pure cotton for comfort & durability" },
                   { icon: Sparkles, title: "Unique Designs", desc: "Carefully crafted designs you won't find anywhere else" },
                   { icon: TrendingUp, title: "Perfect Fit", desc: "Multiple sizes available for the perfect fit every time" }
                 ].map((feature, index) => (
