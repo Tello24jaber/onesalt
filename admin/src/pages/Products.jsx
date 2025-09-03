@@ -35,30 +35,45 @@ export default function Products() {
       const response = await adminAPI.getProducts(params);
       console.log('API Response:', response); // Debug log
       
-      // More robust safety checks for the response structure
-      if (response && typeof response === 'object') {
-        // If response has a products property and it's an array
-        if (Array.isArray(response.products)) {
-          setProducts(response.products);
-          setTotalPages(response.totalPages || 1);
+      // Handle Axios response structure
+      if (response && response.data && typeof response.data === 'object') {
+        const { data } = response;
+        
+        // Check if data has products array
+        if (Array.isArray(data.products)) {
+          setProducts(data.products);
+          setTotalPages(data.totalPages || data.total_pages || 1);
         }
-        // If response itself is an array
-        else if (Array.isArray(response)) {
-          setProducts(response);
+        // If data itself is an array
+        else if (Array.isArray(data)) {
+          setProducts(data);
           setTotalPages(1);
         }
-        // If response has data property that's an array
-        else if (Array.isArray(response.data)) {
-          setProducts(response.data);
-          setTotalPages(response.totalPages || response.total_pages || 1);
-        }
-        // Default fallback
+        // Fallback for unexpected structure
         else {
           console.warn('Unexpected response structure:', response);
           setProducts([]);
           setTotalPages(1);
         }
-      } else {
+      } 
+      // Handle direct response (non-Axios)
+      else if (response && typeof response === 'object') {
+        if (Array.isArray(response.products)) {
+          setProducts(response.products);
+          setTotalPages(response.totalPages || 1);
+        }
+        else if (Array.isArray(response)) {
+          setProducts(response);
+          setTotalPages(1);
+        }
+        else {
+          console.warn('Unexpected response structure:', response);
+          setProducts([]);
+          setTotalPages(1);
+        }
+      }
+      // Complete fallback
+      else {
         console.warn('Invalid response:', response);
         setProducts([]);
         setTotalPages(1);
