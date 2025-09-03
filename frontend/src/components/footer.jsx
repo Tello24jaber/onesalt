@@ -73,7 +73,8 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-gray-700 mt-12 pt-8 text-center">
           <p className="text-gray-300 flex items-center justify-center gap-2">
-            © {currentYear} OneSalt. Made by Talal Jaber
+            © {currentYear} OneSalt. All rights reserved.
+            <Heart className="h-4 w-4 text-red-500" />
           </p>
         </div>
       </div>
