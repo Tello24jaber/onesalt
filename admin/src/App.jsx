@@ -1,4 +1,3 @@
-// admin/src/App.jsx
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -7,7 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Products from './pages/Products';
-import Login from './pages/login';
+import Login from './pages/log';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
