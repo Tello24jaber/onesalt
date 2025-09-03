@@ -454,7 +454,7 @@ const ProductDetailPage = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700">85% Premium Cotton</span>
+                  <span className="text-gray-700">85% French Cotton</span>
                 </div>
                 
                 <div className="flex items-center space-x-3">

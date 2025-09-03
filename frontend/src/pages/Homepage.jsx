@@ -406,7 +406,7 @@ const HomePage = () => {
                 Why Choose onesalt?
               </h2>
               <p className="text-gray-600 text-base sm:text-lg leading-relaxed text-center lg:text-left">
-                We believe in creating more than just clothing. Each OneSalt t-shirt 
+                We believe in creating more than just clothing. Each onesalt t-shirt 
                 represents a commitment to quality, comfort, and unique design that 
                 stands out from the crowd.
               </p>
