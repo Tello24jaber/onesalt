@@ -76,7 +76,7 @@ export default function Orders() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'JOD'
     }).format(amount);
   };
 
@@ -95,13 +95,7 @@ export default function Orders() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <button
-          onClick={handleExport}
-          className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 inline-flex items-center gap-2"
-        >
-          <Download size={20} />
-          Export CSV
-        </button>
+       
       </div>
 
       {/* Search and Filters */}

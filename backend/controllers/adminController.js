@@ -1,10 +1,9 @@
 // backend/controllers/adminController.js
-// Version without CSV export - remove this comment after installing json2csv
+// Updated version with revenue calculation fixes and delivery fee logic
 const supabase = require('../config/supabaseClient');
-// const { Parser } = require('json2csv'); // Uncomment after installing json2csv
 
 const adminController = {
-  // Dashboard Stats
+  // Dashboard Stats - Fixed to exclude cancelled orders from revenue
   async getDashboardStats(req, res) {
     try {
       const now = new Date();
@@ -12,16 +11,16 @@ const adminController = {
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      // Orders today
+      // Orders today (all statuses)
       const { data: ordersToday } = await supabase
         .from('orders')
-        .select('total_price')
+        .select('total_price, status')
         .gte('created_at', today.toISOString());
 
-      // Orders last 7 days
+      // Orders last 7 days (all statuses)
       const { data: orders7Days } = await supabase
         .from('orders')
-        .select('total_price')
+        .select('total_price, status')
         .gte('created_at', sevenDaysAgo.toISOString());
 
       // Orders by status
@@ -41,11 +40,17 @@ const adminController = {
         .order('created_at', { ascending: false })
         .limit(10);
 
+      // Calculate revenue excluding cancelled orders
+      const calculateRevenue = (orders) => {
+        return orders?.filter(o => o.status !== 'cancelled')
+          .reduce((sum, o) => sum + parseFloat(o.total_price), 0) || 0;
+      };
+
       res.json({
         ordersToday: ordersToday?.length || 0,
-        revenueToday: ordersToday?.reduce((sum, o) => sum + parseFloat(o.total_price), 0) || 0,
+        revenueToday: calculateRevenue(ordersToday),
         orders7Days: orders7Days?.length || 0,
-        revenue7Days: orders7Days?.reduce((sum, o) => sum + parseFloat(o.total_price), 0) || 0,
+        revenue7Days: calculateRevenue(orders7Days),
         statusCounts: statusCounts || {},
         recentOrders: recentOrders || []
       });
@@ -261,9 +266,16 @@ const adminController = {
         }
       });
 
+      // If city changed, recalculate delivery fee
+      if (updates.city !== undefined) {
+        const cityLower = updates.city.toLowerCase().trim();
+        const isAmman = cityLower.includes('amman') || cityLower.includes('عمان');
+        updates.shipping_fee = isAmman ? 2 : 3;
+      }
+
       // If shipping_fee changed, recalculate total
-      if (updates.shipping_fee !== undefined) {
-        await this.recalculateOrderTotal(req.params.id);
+      if (updates.shipping_fee !== undefined || updates.city !== undefined) {
+        await this.recalculateOrderTotal(req.params.id, updates.shipping_fee);
       }
 
       const { data, error } = await supabase
@@ -289,6 +301,15 @@ const adminController = {
         return res.status(400).json({ error: 'Invalid status' });
       }
 
+      // Get current order status to check if we're changing to/from cancelled
+      const { data: currentOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('status, total_price')
+        .eq('id', req.params.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { data, error } = await supabase
         .from('orders')
         .update({ status })
@@ -297,6 +318,15 @@ const adminController = {
         .single();
 
       if (error) throw error;
+
+      // Log status change for revenue tracking (optional - could be used for analytics)
+      console.log(`Order ${req.params.id} status changed from ${currentOrder.status} to ${status}`);
+      if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
+        console.log(`Revenue impact: -${currentOrder.total_price} JD`);
+      } else if (currentOrder.status === 'cancelled' && status !== 'cancelled') {
+        console.log(`Revenue impact: +${currentOrder.total_price} JD`);
+      }
+
       res.json(data);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -331,6 +361,7 @@ const adminController = {
           city: order.city,
           notes: order.notes,
           status: order.status,
+          payment_method: order.payment_method,
           created_at: order.created_at
         },
         items: items,
@@ -453,27 +484,49 @@ const adminController = {
     }
   },
 
-  // Helper function to recalculate order total
-  async recalculateOrderTotal(orderId) {
-    const { data: items } = await supabase
-      .from('order_items')
-      .select('subtotal')
-      .eq('order_id', orderId);
+  // Helper function to recalculate order total with proper delivery fee
+  async recalculateOrderTotal(orderId, newShippingFee = null) {
+    try {
+      const { data: items } = await supabase
+        .from('order_items')
+        .select('subtotal')
+        .eq('order_id', orderId);
 
-    const { data: order } = await supabase
-      .from('orders')
-      .select('shipping_fee')
-      .eq('id', orderId)
-      .single();
+      const { data: order } = await supabase
+        .from('orders')
+        .select('shipping_fee, city')
+        .eq('id', orderId)
+        .single();
 
-    const itemsTotal = items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
-    const shippingFee = parseFloat(order?.shipping_fee || 0);
-    const totalPrice = itemsTotal + shippingFee;
+      const itemsTotal = items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+      
+      // Use provided shipping fee or calculate based on city
+      let shippingFee = newShippingFee;
+      if (shippingFee === null) {
+        if (order && order.city) {
+          const cityLower = order.city.toLowerCase().trim();
+          const isAmman = cityLower.includes('amman') || cityLower.includes('عمان');
+          shippingFee = isAmman ? 2 : 3;
+        } else {
+          shippingFee = parseFloat(order?.shipping_fee || 0);
+        }
+      }
+      
+      const totalPrice = itemsTotal + shippingFee;
 
-    await supabase
-      .from('orders')
-      .update({ total_price: totalPrice })
-      .eq('id', orderId);
+      await supabase
+        .from('orders')
+        .update({ 
+          total_price: totalPrice,
+          shipping_fee: shippingFee
+        })
+        .eq('id', orderId);
+
+      return totalPrice;
+    } catch (error) {
+      console.error('Error recalculating order total:', error);
+      throw error;
+    }
   },
 
   // Export - Temporary implementation without CSV
@@ -483,28 +536,6 @@ const adminController = {
       res.status(501).json({ 
         error: 'CSV export not available. Please install json2csv package: npm install json2csv' 
       });
-      
-     
-      const { from, to, status } = req.query;
-      let query = supabase.from('orders').select('*');
-
-      if (from) query = query.gte('created_at', from);
-      if (to) query = query.lte('created_at', to);
-      if (status) query = query.eq('status', status);
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const fields = ['id', 'customer_name', 'phone', 'address', 'city', 
-                     'total_price', 'shipping_fee', 'status', 'created_at'];
-      const parser = new Parser({ fields });
-      const csv = parser.parse(data);
-
-      res.header('Content-Type', 'text/csv');
-      res.attachment('orders.csv');
-      res.send(csv);
-      
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

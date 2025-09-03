@@ -18,14 +18,21 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle 401 responses
+// Handle responses and auto-logout
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Clear token and redirect to login
       localStorage.removeItem('adminToken');
-      window.location.href = '/login';
-      toast.error('Session expired. Please login again.');
+      
+      // Check if we're already on login page to avoid infinite redirects
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+        toast.error('Session expired. Please login again.');
+      }
+    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+      toast.error('Network error. Please check your connection.');
     }
     return Promise.reject(error);
   }
@@ -67,7 +74,22 @@ export const adminAPI = {
       params,
       responseType: 'blob'
     });
-  }
+  },
+
+  // Notifications
+  getNotifications: () => API.get('/admin/notifications'),
+  markNotificationAsRead: (id) => API.post(`/admin/notifications/${id}/read`),
+};
+
+// Utility function to check if user is authenticated
+export const isAuthenticated = () => {
+  return !!localStorage.getItem('adminToken');
+};
+
+// Utility function to logout user
+export const logout = () => {
+  localStorage.removeItem('adminToken');
+  window.location.href = '/login';
 };
 
 export default API;

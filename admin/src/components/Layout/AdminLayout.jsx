@@ -1,20 +1,58 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Home, Package, ShoppingCart, 
   LogOut, ChevronDown, User 
 } from 'lucide-react';
 
-export default function AdminLayout() {
+export default function AdminLayout({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
+    
+    // Call parent's logout handler to update authentication state
+    if (onLogout) {
+      onLogout();
+    }
+    
     navigate('/login');
   };
+
+  // Add auto-logout hooks for this component as well
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('adminToken');
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        window.adminLayoutLogoutTimer = setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            handleLogout();
+          }
+        }, 10000);
+      } else if (document.visibilityState === 'visible') {
+        if (window.adminLayoutLogoutTimer) {
+          clearTimeout(window.adminLayoutLogoutTimer);
+          window.adminLayoutLogoutTimer = null;
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (window.adminLayoutLogoutTimer) {
+        clearTimeout(window.adminLayoutLogoutTimer);
+      }
+    };
+  }, []);
 
   const navItems = [
     { path: '/', icon: Home, label: 'Dashboard' },

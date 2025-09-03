@@ -30,6 +30,21 @@ const validateGoogleMapsLink = (link) => {
   return googleMapsPatterns.some(pattern => pattern.test(link));
 };
 
+// Calculate delivery fee based on city
+const calculateDeliveryFee = (city) => {
+  if (!city) return 3; // Default to 3 JD if no city provided
+  
+  const cityLower = city.toLowerCase().trim();
+  
+  // Check if city is Amman (supports both English and Arabic)
+  const isAmman = cityLower.includes('amman') || 
+                  cityLower.includes('عمان') || 
+                  cityLower === 'amman' ||
+                  cityLower === 'عمان';
+  
+  return isAmman ? 2 : 3; // 2 JD for Amman, 3 JD for other cities
+};
+
 // Create new order with items
 const createOrder = async (req, res) => {
   try {
@@ -62,8 +77,6 @@ const createOrder = async (req, res) => {
       });
     }
 
-   
-
     if (location_link && !validateGoogleMapsLink(location_link)){
       return res.status(400).json({ 
         success: false,
@@ -90,8 +103,8 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Validate each item
-    let calculatedTotal = 0;
+    // Validate each item and calculate subtotal
+    let calculatedItemsTotal = 0;
     for (const item of items) {
       if (!item.product_id || !item.product_name || !item.color || !item.size) {
         return res.status(400).json({ 
@@ -127,15 +140,19 @@ const createOrder = async (req, res) => {
         });
       }
 
-      calculatedTotal += expectedSubtotal;
+      calculatedItemsTotal += expectedSubtotal;
     }
 
-    // Verify total price (allow small difference for rounding)
+    // Calculate delivery fee based on city
+    const deliveryFee = calculateDeliveryFee(city);
+    const calculatedTotal = calculatedItemsTotal + deliveryFee;
+
+    // Verify total price includes delivery fee
     const providedTotal = parseFloat(total_price);
     if (Math.abs(providedTotal - calculatedTotal) > 0.01) {
       return res.status(400).json({ 
         success: false,
-        message: `Total price mismatch. Expected ${calculatedTotal}, got ${providedTotal}` 
+        message: `Total price mismatch. Expected ${calculatedTotal} JD (${calculatedItemsTotal} JD + ${deliveryFee} JD delivery), got ${providedTotal} JD` 
       });
     }
 
@@ -157,7 +174,7 @@ const createOrder = async (req, res) => {
       city: city.trim(),
       notes: notes?.trim() || null,
       total_price: calculatedTotal,
-      shipping_fee: 0, // Free shipping
+      shipping_fee: deliveryFee,
       status: 'pending',
       location_link: location_link,
       latitude: latitude || null,
@@ -231,9 +248,15 @@ const createOrder = async (req, res) => {
         city: orderData.city,
         notes: orderData.notes,
         total_price: orderData.total_price,
+        shipping_fee: orderData.shipping_fee,
         status: orderData.status,
         location_link: orderData.location_link,
         payment_method: orderData.payment_method,
+        delivery_info: {
+          city: city.trim(),
+          delivery_fee: deliveryFee,
+          is_amman: calculateDeliveryFee(city) === 2
+        },
         items: orderItems.map(item => ({
           product_name: item.product_name,
           color: item.color,
@@ -372,6 +395,13 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
+    // Get current order for logging revenue impact
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('status, total_price, customer_name')
+      .eq('id', id)
+      .single();
+
     const { data, error } = await supabase
       .from('orders')
       .update({ status })
@@ -393,6 +423,15 @@ const updateOrderStatus = async (req, res) => {
         message: 'Failed to update order',
         error: error.message 
       });
+    }
+
+    // Log revenue impact for cancelled orders
+    if (currentOrder) {
+      if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
+        console.log(`Order ${id} cancelled - Revenue impact: -${currentOrder.total_price} JD`);
+      } else if (currentOrder.status === 'cancelled' && status !== 'cancelled') {
+        console.log(`Order ${id} reactivated - Revenue impact: +${currentOrder.total_price} JD`);
+      }
     }
 
     res.json({
@@ -465,10 +504,47 @@ const updatePaymentStatus = async (req, res) => {
   }
 };
 
+// Update order delivery fee when city changes (helper function)
+const updateOrderDeliveryFee = async (orderId, newCity) => {
+  try {
+    const deliveryFee = calculateDeliveryFee(newCity);
+    
+    // Get current order items total
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('subtotal')
+      .eq('order_id', orderId);
+
+    const itemsTotal = items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+    const newTotal = itemsTotal + deliveryFee;
+
+    // Update order with new delivery fee and total
+    await supabase
+      .from('orders')
+      .update({
+        shipping_fee: deliveryFee,
+        total_price: newTotal,
+        city: newCity
+      })
+      .eq('id', orderId);
+
+    return {
+      delivery_fee: deliveryFee,
+      new_total: newTotal,
+      items_total: itemsTotal
+    };
+  } catch (error) {
+    console.error('Error updating delivery fee:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   createOrder,
   getAllOrders,
   getOrderById,
   updateOrderStatus,
-  updatePaymentStatus
+  updatePaymentStatus,
+  updateOrderDeliveryFee,
+  calculateDeliveryFee
 };

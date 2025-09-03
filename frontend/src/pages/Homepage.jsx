@@ -8,6 +8,32 @@ import { toast } from 'react-toastify';
 import whyChooseImage from '../images/hero-bg.png';
 import heroBackground from '../images/herobg.png';
 
+// OneSalt SVG Logo Component
+const OneSaltLogo = ({ className = "", width = "300", height = "148" }) => (
+  <svg 
+    version="1.0" 
+    xmlns="http://www.w3.org/2000/svg"  
+    width={`${width}pt`} 
+    height={`${height}pt`} 
+    viewBox="0 0 300.000000 148.000000"  
+    preserveAspectRatio="xMidYMid meet"
+    className={className}
+  >  
+    <g 
+      transform="translate(0.000000,148.000000) scale(0.050000,-0.050000)" 
+      fill="#90CAF9" 
+      stroke="none"
+    > 
+      <path d="M5061 1941 c-27 -50 -28 -900 -1 -971 15 -39 32 -51 65 -46 44 6 45 12 55 340 11 378 23 412 138 386 85 -18 95 -45 109 -316 18 -324 75 -414 261 -414 147 0 159 110 16 150 -157 45 -185 512 -33 557 134 40 152 52 145 98 -5 34 -23 47 -82 57 -89 14 -116 37 -146 124 -36 107 -115 100 -165 -15 -61 -138 -190 -170 -215 -54 -30 141 -101 191 -147 104z"/> 
+      <path d="M507 1812 c-490 -159 -374 -888 143 -891 338 -2 559 399 379 690 -109 178 -331 263 -522 201z m266 -165 c99 -47 167 -155 167 -267 0 -330 -453 -418 -571 -111 -97 255 159 495 404 378z"/> 
+      <path d="M1224 1815 c-31 -38 -55 -798 -26 -852 26 -47 86 -57 118 -18 11 14 23 133 27 265 9 316 75 433 257 462 177 28 265 -110 275 -432 9 -309 13 -324 81 -316 l54 6 6 280 c7 309 -9 395 -91 492 -112 133 -277 168 -447 95 l-100 -43 -40 43 c-45 49 -84 55 -114 18z"/> 
+      <path d="M2424 1812 c-464 -151 -394 -840 91 -887 180 -17 395 79 395 176 0 67 -67 74 -182 18 -161 -78 -388 -16 -421 114 -19 78 15 86 347 87 351 0 359 4 324 161 -57 254 -314 408 -554 331z m310 -195 c178 -109 107 -176 -187 -177 -256 0 -298 20 -238 112 81 123 281 154 425 65z"/> 
+      <path d="M3548 1819 c-129 -39 -204 -158 -180 -286 17 -92 79 -143 264 -219 141 -59 159 -72 165 -124 13 -111 -156 -151 -289 -69 -121 75 -220 11 -135 -85 191 -214 597 -107 597 157 0 116 -76 192 -246 249 -196 65 -254 144 -154 210 52 34 94 31 205 -14 57 -24 69 -23 100 8 90 90 -161 223 -327 173z"/> 
+      <path d="M4370 1822 c-427 -107 -474 -677 -70 -860 121 -55 227 -52 359 9 111 52 161 40 161 -36 0 -10 25 -15 55 -11 l55 6 6 400 c3 220 0 420 -6 445 -13 53 -91 62 -130 15 -31 -37 -86 -38 -156 -2 -72 36 -200 52 -274 34z m250 -187 c282 -143 178 -555 -140 -555 -215 0 -367 233 -272 416 86 166 250 221 412 139z"/> 
+    </g> 
+  </svg>
+);
+
 const AnimatedCounter = ({ 
   endValue = 100, 
   duration = 2000, 
@@ -58,7 +84,8 @@ const AnimatedCounter = ({
     </span>
   );
 };
-// Enhanced Minimal Splash Screen Component
+
+// Enhanced Minimal Splash Screen Component with SVG Logo
 const SplashScreen = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -76,12 +103,13 @@ const SplashScreen = ({ onComplete }) => {
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
       <div className="text-center space-y-6">
-        {/* Logo Text with Animation */}
-        <div className="relative">
-          <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight animate-fade-in-up">
-            <span className="text-[#0F0F0F]">one</span>
-            <span className="text-[#90CAF9]">salt</span>
-          </h1>
+        {/* SVG Logo with Animation */}
+        <div className="relative animate-fade-in-up">
+          <OneSaltLogo 
+            className="w-64 h-32 md:w-80 md:h-40 lg:w-96 lg:h-48 mx-auto drop-shadow-lg" 
+            width="400"
+            height="200"
+          />
           
           {/* Subtle underline animation */}
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-transparent via-[#90CAF9] to-transparent animate-expand-width"></div>
@@ -250,14 +278,18 @@ const HomePage = () => {
           <div className={`text-center space-y-6 md:space-y-8 lg:space-y-10 transition-all duration-700 ${
             isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
-            {/* Main Heading - Responsive Sizing */}
+            {/* SVG Logo - Responsive Sizing */}
             <div className="space-y-4 md:space-y-6">
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white drop-shadow-2xl">
-                one<span className="text-[#90CAF9]">salt</span>
-              </h1>
-              <p className="text-lg sm:text-l lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg px-4">
-Premium streetwear bold, comfy
- and made for your vibe</p>
+              <div className="flex justify-center">
+                <OneSaltLogo 
+                  className="w-48 h-24 sm:w-64 sm:h-32 md:w-80 md:h-40 lg:w-96 lg:h-48 drop-shadow-2xl" 
+                  width="400"
+                  height="200"
+                />
+              </div>
+              <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg px-4">
+                Premium streetwear bold, comfy and made for your vibe
+              </p>
             </div>
 
             {/* CTA Buttons - Better Mobile Spacing */}
@@ -279,41 +311,41 @@ Premium streetwear bold, comfy
 
             {/* Stats - Improved Mobile Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-8 sm:pt-12 max-w-3xl mx-auto px-4">
-             {[
-  { icon: Shirt, value: 4, suffix: "+", label: "Unique Designs", delay: 200 },
-  { icon: Star, value: "Premium", suffix: "", label: "Quality", delay: 400 },
-  { icon: Users, value: 100, suffix: "+", label: "Happy Customers", delay: 600 }
-].map((stat, index) => (
+              {[
+                { icon: Shirt, value: 4, suffix: "+", label: "Unique Designs", delay: 200 },
+                { icon: Star, value: "Premium", suffix: "", label: "Quality", delay: 400 },
+                { icon: Users, value: 100, suffix: "+", label: "Happy Customers", delay: 600 }
+              ].map((stat, index) => (
                 <div 
                   key={index}
                   className={`text-center space-y-2 sm:space-y-3 bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg transition-all duration-500 ${
                     isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
-                 style={{transitionDelay: `${stat.delay - 200}ms`}}
+                  style={{transitionDelay: `${stat.delay - 200}ms`}}
                 >
                   <div className="bg-[#90CAF9]/20 rounded-full p-3 sm:p-4 w-14 h-14 sm:w-16 sm:h-16 mx-auto flex items-center justify-center">
                     <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#42A5F5]" />
                   </div>
                   
-<div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">
-  {typeof stat.value === 'number' ? (
-    <AnimatedCounter
-      endValue={stat.value}
-      duration={2000}
-      delay={stat.delay}
-      suffix={stat.suffix}
-    />
-  ) : (
-    stat.value
-  )}
-</div><div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#0F0F0F]">
+                    {typeof stat.value === 'number' ? (
+                      <AnimatedCounter
+                        endValue={stat.value}
+                        duration={2000}
+                        delay={stat.delay}
+                        suffix={stat.suffix}
+                      />
+                    ) : (
+                      stat.value
+                    )}
+                  </div>
+                  <div className="text-sm sm:text-base text-gray-600">{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </section>
-
       {/* Featured Products Section */}
       <section id="featured" className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

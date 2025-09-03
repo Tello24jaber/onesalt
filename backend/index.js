@@ -29,7 +29,7 @@ app.use(helmet());
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Replace with your actual frontend domain
+    ? ['https://wearonesalt.com'] // Replace with your actual frontend domain
     : true, // Allow all origins in development
   credentials: true
 }));

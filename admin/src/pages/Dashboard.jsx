@@ -21,6 +21,33 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardStats();
+    
+    // Add auto-logout when tab/window is closed
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('adminToken');
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // User switched away from tab, start logout timer
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            localStorage.removeItem('adminToken');
+          }
+        }, 5000); // 5 seconds after tab becomes hidden
+      }
+    };
+
+    // Listen for tab close/refresh
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Listen for tab visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -37,8 +64,9 @@ export default function Dashboard() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+      currency: 'JOD',
+      minimumFractionDigits: 2
+    }).format(amount).replace('JOD', 'JD');
   };
 
   const getStatusBadgeClass = (status) => {

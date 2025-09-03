@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Save, Plus, Edit2, Trash2, 
-  Receipt, User, MapPin, Phone, 
+  Printer, User, MapPin, Phone, 
   MessageSquare, X , DollarSign, Smartphone, ExternalLink 
 } from 'lucide-react';
 import { adminAPI } from '../services/api';
@@ -150,8 +150,9 @@ export default function OrderDetail() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+      currency: 'JOD',
+      minimumFractionDigits: 2
+    }).format(amount).replace('JOD', 'JD');
   };
 
   const getStatusBadgeClass = (status) => {
@@ -202,8 +203,8 @@ export default function OrderDetail() {
           onClick={() => setShowReceipt(true)}
           className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 inline-flex items-center gap-2"
         >
-          <Receipt size={20} />
-          View Receipt
+          <Printer size={20} />
+          Print Receipt
         </button>
       </div>
 
@@ -374,70 +375,70 @@ export default function OrderDetail() {
         </div>
       </div>
 
-      
-<div className="bg-white rounded-lg shadow p-6 mb-6">
-  <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment & Delivery</h2>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {/* Payment Method */}
-    <div>
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-        {order.payment_method === 'cash' ? <DollarSign size={16} /> : <Smartphone size={16} />}
-        Payment Method
-      </label>
-      <div className="flex items-center gap-2">
-        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-          order.payment_method === 'cash' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-purple-100 text-purple-800'
-        }`}>
-          {order.payment_method === 'cash' ? 'Cash on Delivery' : 'CliQ Transfer'}
-        </span>
-      </div>
-    </div>
+      {/* Payment & Delivery */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment & Delivery</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Payment Method */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              {order.payment_method === 'cash' ? <DollarSign size={16} /> : <Smartphone size={16} />}
+              Payment Method
+            </label>
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                order.payment_method === 'cash' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-purple-100 text-purple-800'
+              }`}>
+                {order.payment_method === 'cash' ? 'Cash on Delivery' : 'CliQ Transfer'}
+              </span>
+            </div>
+          </div>
 
-    {/* Delivery Location */}
-    <div>
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-        <MapPin size={16} />
-        Delivery Location
-      </label>
-      {order.location_link ? (
-        <a 
-          href={order.location_link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
-        >
-          <span>View on Google Maps</span>
-          <ExternalLink size={14} />
-        </a>
-      ) : order.latitude && order.longitude ? (
-        <a 
-          href={`https://maps.google.com/?q=${order.latitude},${order.longitude}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
-        >
-          <span>View on Google Maps</span>
-          <ExternalLink size={14} />
-        </a>
-      ) : (
-        <span className="text-gray-500">No location provided</span>
-      )}
-    </div>
+          {/* Delivery Location */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <MapPin size={16} />
+              Delivery Location
+            </label>
+            {order.location_link ? (
+              <a 
+                href={order.location_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
+              >
+                <span>View on Google Maps</span>
+                <ExternalLink size={14} />
+              </a>
+            ) : order.latitude && order.longitude ? (
+              <a 
+                href={`https://maps.google.com/?q=${order.latitude},${order.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 hover:underline"
+              >
+                <span>View on Google Maps</span>
+                <ExternalLink size={14} />
+              </a>
+            ) : (
+              <span className="text-gray-500">No location provided</span>
+            )}
+          </div>
 
-    {/* Map Address if available */}
-    {order.map_address && (
-      <div className="md:col-span-2">
-        <label className="text-sm font-medium text-gray-700 mb-1 block">
-          Map Address Details
-        </label>
-        <p className="text-gray-900 text-sm bg-gray-50 p-2 rounded">{order.map_address}</p>
+          {/* Map Address if available */}
+          {order.map_address && (
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Map Address Details
+              </label>
+              <p className="text-gray-900 text-sm bg-gray-50 p-2 rounded">{order.map_address}</p>
+            </div>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-</div>
 
       {/* Order Items */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -685,88 +686,315 @@ export default function OrderDetail() {
     </div>
   );
 }
-
-// Receipt Component
+// Professional Print Receipt Component - CLEAN VERSION
 function OrderReceipt({ order, onClose, formatCurrency }) {
   const subtotal = order.items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+  
+  // Calculate shipping fee based on city
+  const calculateShippingFee = (city) => {
+    if (!city) return 3;
+    const cityLower = city.toLowerCase().trim();
+    const isAmman = cityLower.includes('amman') || cityLower.includes('عمان');
+    return isAmman ? 2 : 3;
+  };
+
+  const shippingFee = order.shipping_fee || calculateShippingFee(order.city);
+
+  const handlePrint = () => {
+    // Create a new window for printing to avoid blank page issue
+    const printWindow = window.open('', '_blank');
+    const printContent = document.getElementById('receipt-content').innerHTML;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - Order #${order.id.substring(0, 8).toUpperCase()}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              background: white;
+              color: black;
+            }
+            .receipt-container { 
+              max-width: 400px; 
+              margin: 0 auto; 
+              border: 2px solid #333;
+            }
+            .store-header { 
+              background: #1f2937; 
+              color: white; 
+              padding: 16px; 
+              text-align: center; 
+            }
+            .store-title { 
+              font-size: 24px; 
+              font-weight: bold; 
+              margin-bottom: 4px; 
+            }
+            .store-subtitle { 
+              font-size: 14px; 
+              opacity: 0.9; 
+            }
+            .store-contact { 
+              border-top: 1px solid #4b5563; 
+              margin-top: 12px; 
+              padding-top: 8px; 
+            }
+            .store-contact p { 
+              font-size: 12px; 
+              margin: 2px 0; 
+            }
+            .receipt-info { 
+              padding: 16px; 
+              border-bottom: 1px solid #d1d5db; 
+            }
+            .info-row { 
+              display: flex; 
+              justify-content: space-between; 
+              margin-bottom: 8px; 
+            }
+            .info-row:last-child { 
+              margin-bottom: 0; 
+            }
+            .label { 
+              font-weight: bold; 
+            }
+            .customer-section { 
+              padding: 16px; 
+              border-bottom: 1px solid #d1d5db; 
+              background: #f9fafb; 
+            }
+            .section-title { 
+              font-weight: bold; 
+              margin-bottom: 8px; 
+              text-align: center; 
+              border-bottom: 1px solid #d1d5db; 
+              padding-bottom: 8px; 
+            }
+            .customer-info div { 
+              font-size: 14px; 
+              margin-bottom: 4px; 
+            }
+            .items-section { 
+              padding: 16px; 
+            }
+            .item { 
+              margin-bottom: 12px; 
+              padding-bottom: 8px; 
+              border-bottom: 1px solid #f3f4f6; 
+            }
+            .item:last-child { 
+              border-bottom: none; 
+            }
+            .item-name { 
+              font-weight: 500; 
+              font-size: 14px; 
+            }
+            .item-details { 
+              font-size: 12px; 
+              color: #6b7280; 
+              margin-bottom: 4px; 
+            }
+            .item-pricing { 
+              display: flex; 
+              justify-content: space-between; 
+              font-size: 14px; 
+            }
+            .totals-section { 
+              padding: 16px; 
+              border-top: 2px solid #d1d5db; 
+              background: #f9fafb; 
+            }
+            .total-row { 
+              display: flex; 
+              justify-content: space-between; 
+              margin-bottom: 8px; 
+            }
+            .total-final { 
+              display: flex; 
+              justify-content: space-between; 
+              font-size: 18px; 
+              font-weight: bold; 
+              border-top: 1px solid #d1d5db; 
+              padding-top: 8px; 
+            }
+            .payment-section { 
+              padding: 16px; 
+              border-top: 1px solid #d1d5db; 
+              text-align: center; 
+            }
+            .payment-method { 
+              display: inline-block; 
+              padding: 4px 8px; 
+              border-radius: 4px; 
+              font-size: 12px; 
+              font-weight: bold; 
+            }
+            .payment-cash { 
+              background: #dcfce7; 
+              color: #166534; 
+            }
+            .payment-cliq { 
+              background: #e0e7ff; 
+              color: #3730a3; 
+            }
+            .footer { 
+              padding: 16px; 
+              border-top: 1px solid #d1d5db; 
+              text-align: center; 
+              font-size: 12px; 
+              color: white; 
+              background: #1f2937; 
+            }
+            .footer p { 
+              margin: 4px 0; 
+            }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .receipt-container { max-width: none; border: none; }
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.close();
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
-        <div className="p-6">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <div className="p-8">
+          {/* Header with close button */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Order Receipt</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <X size={24} />
-            </button>
+            <h2 className="text-xl font-bold">Receipt Preview</h2>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handlePrint}
+                className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 inline-flex items-center gap-2"
+              >
+                <Printer size={16} />
+                Print
+              </button>
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
           </div>
 
-          <div className="border-t border-b py-4 mb-4">
-            <h3 className="font-bold text-lg mb-2">OneSalt</h3>
-            <p className="text-sm text-gray-600">Order #{order.id}</p>
-            <p className="text-sm text-gray-600">
-              {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
-            </p>
-          </div>
+          {/* Professional Receipt */}
+          <div id="receipt-content">
+            <div className="receipt-container bg-white border-2 border-gray-200 max-w-md mx-auto">
+              {/* Store Header */}
+              <div className="store-header bg-gray-900 text-white p-4 text-center">
+                <h1 className="store-title text-2xl font-bold mb-1">OneSalt</h1>
+                <p className="store-subtitle text-sm opacity-90">Fashion Store</p>
+                <div className="store-contact border-t border-gray-600 mt-3 pt-2">
+                
+                  <p className="text-xs">Email: wearonesalt@gmail.com</p>
+                </div>
+              </div>
 
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2">Customer Information</h4>
-            <p className="text-sm">{order.customer_name}</p>
-            <p className="text-sm">{order.phone}</p>
-            <p className="text-sm">{order.address}</p>
-            <p className="text-sm">{order.city}</p>
-          </div>
+              {/* Receipt Info */}
+              <div className="receipt-info p-4 border-b border-gray-200">
+                <div className="info-row flex justify-between items-center mb-2">
+                  <span className="label font-bold">Receipt #:</span>
+                  <span className="font-mono text-sm">{order.id.substring(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="info-row flex justify-between items-center mb-2">
+                  <span className="label font-bold">Date:</span>
+                  <span className="text-sm">{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                </div>
+                <div className="info-row flex justify-between items-center">
+                  <span className="label font-bold">Status:</span>
+                  <span className={`px-2 py-1 rounded text-xs font-semibold uppercase ${
+                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {order.status}
+                  </span>
+                </div>
+              </div>
 
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2">Order Items</h4>
-            <table className="w-full text-sm">
-              <thead className="border-b">
-                <tr>
-                  <th className="text-left py-2">Item</th>
-                  <th className="text-right py-2">Qty</th>
-                  <th className="text-right py-2">Price</th>
-                  <th className="text-right py-2">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.items?.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="py-2">
-                      {item.product_name}
-                      <div className="text-xs text-gray-500">
-                        {item.color} / {item.size}
-                      </div>
-                    </td>
-                    <td className="text-right py-2">{item.quantity}</td>
-                    <td className="text-right py-2">{formatCurrency(item.unit_price)}</td>
-                    <td className="text-right py-2">{formatCurrency(item.subtotal)}</td>
-                  </tr>
+              {/* Customer Information */}
+              <div className="customer-section p-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="section-title font-bold mb-2 text-center">CUSTOMER DETAILS</h3>
+                <div className="customer-info text-sm space-y-1">
+                  <div><strong>Name:</strong> {order.customer_name}</div>
+                  <div><strong>Phone:</strong> {order.phone}</div>
+                  <div><strong>Address:</strong> {order.address}</div>
+                  <div><strong>City:</strong> {order.city}</div>
+                  {order.notes && <div><strong>Notes:</strong> {order.notes}</div>}
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="items-section p-4">
+                <h3 className="section-title font-bold mb-3 text-center border-b pb-2">ITEMS PURCHASED</h3>
+                {order.items?.map((item, index) => (
+                  <div key={item.id} className="item mb-3 pb-2 border-b border-gray-100 last:border-b-0">
+                    <div className="item-name font-medium text-sm mb-1">{item.product_name}</div>
+                    <div className="item-details text-xs text-gray-600 mb-1">
+                      Color: {item.color} • Size: {item.size}
+                    </div>
+                    <div className="item-pricing flex justify-between items-center text-sm">
+                      <span>{item.quantity} × {formatCurrency(item.unit_price)}</span>
+                      <span className="font-medium">{formatCurrency(item.subtotal)}</span>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between mb-2">
-              <span>Subtotal:</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span>Shipping:</span>
-              <span>{formatCurrency(order.shipping_fee)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>{formatCurrency(order.total_price)}</span>
+              {/* Totals */}
+              <div className="totals-section p-4 border-t-2 border-gray-300 bg-gray-50">
+                <div className="space-y-2">
+                  <div className="total-row flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                  <div className="total-row flex justify-between text-sm">
+                    <span>Delivery Fee ({order.city}):</span>
+                    <span>{formatCurrency(shippingFee)}</span>
+                  </div>
+                  <div className="total-final flex justify-between text-lg font-bold border-t pt-2">
+                    <span>TOTAL:</span>
+                    <span>{formatCurrency(subtotal + shippingFee)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Method */}
+              <div className="payment-section p-4 border-t border-gray-200 text-center">
+                <div className="mb-2">
+                  <span className="font-bold">Payment Method: </span>
+                  <span className={`payment-method inline-block px-2 py-1 rounded text-xs font-semibold ${
+                    order.payment_method === 'cash' 
+                      ? 'payment-cash bg-green-100 text-green-800' 
+                      : 'payment-cliq bg-purple-100 text-purple-800'
+                  }`}>
+                    {order.payment_method === 'cash' ? 'Cash on Delivery' : 'CliQ Transfer'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="footer p-4 border-t border-gray-200 text-center text-xs text-white bg-gray-900">
+                <p className="mb-1">Thank you for shopping with OneSalt!</p>
+                <p className="mb-1">For support, contact us at wearonesalt@gmail.com</p>
+                <p>Return Policy: 7 days from delivery date</p>
+              </div>
             </div>
           </div>
-
-          {order.notes && (
-            <div className="mt-4 pt-4 border-t">
-              <h4 className="font-semibold mb-2">Notes</h4>
-              <p className="text-sm text-gray-600">{order.notes}</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

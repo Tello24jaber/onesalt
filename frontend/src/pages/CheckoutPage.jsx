@@ -3,7 +3,7 @@ import {
   ArrowLeft, CreditCard, RefreshCw, Phone, MapPin, User, FileText, 
   Navigation, DollarSign, Smartphone, Shield, Copy, Check
 } from 'lucide-react';
-
+import { ordersAPI } from '../services/api'; 
 import { useCart } from '../context/ontext';
 
 const CheckoutPage = () => {
@@ -32,8 +32,7 @@ const CheckoutPage = () => {
     { name: 'Dead Sea', fee: 3 },
     { name: 'Umm Qais', fee: 3 },
     { name: 'Wadi Al-Seer', fee: 3 },
-    { name: 'Russeifa', fee: 3 },
-    { name: "Al-'aqabah", fee: 3 }
+    { name: 'Russeifa', fee: 3 }
   ];
   
   // Customer form state
@@ -289,74 +288,163 @@ const CheckoutPage = () => {
     
     return true;
   };
-
-  const handleCheckout = async () => {
-    if (!validateForm()) return;
+// Enhanced handleCheckout with debugging for CheckoutPage.jsx
+const handleCheckout = async () => {
+  if (!validateForm()) return;
+  
+  // Additional check to ensure cart isn't empty at checkout time
+  if (!items || items.length === 0) {
+    alert('Your cart is empty. Please add some items first.');
+    window.location.href = '/products';
+    return;
+  }
+  
+  try {
+    setIsProcessing(true);
     
-    // Additional check to ensure cart isn't empty at checkout time
-    if (!items || items.length === 0) {
-      alert('Your cart is empty. Please add some items first.');
-      window.location.href = '/products';
+    // Parse location coordinates
+    let latitude = null;
+    let longitude = null;
+    if (customerForm.location_coordinates) {
+      const coords = customerForm.location_coordinates.split(',');
+      if (coords.length === 2) {
+        latitude = parseFloat(coords[0]);
+        longitude = parseFloat(coords[1]);
+      }
+    }
+
+    // Create order data matching backend validation expectations
+    const orderData = {
+      name: customerForm.name.trim(),
+      phone: customerForm.phone.trim(),
+      address: customerForm.address.trim(),
+      city: customerForm.city.trim(),
+      notes: customerForm.notes?.trim() || '',
+      total_price: getTotalPrice(),
+      payment_method: customerForm.payment_method,
+      location_link: locationData?.link || null,
+      latitude: latitude,
+      longitude: longitude,
+      items: items.map(item => {
+        // Generate proper UUID if item doesn't have valid ID
+        const productId = (item.id && item.id.length === 36) ? item.id : crypto.randomUUID();
+        
+        return {
+          product_id: productId,
+          product_name: item.name.trim(),
+          color: item.color.trim(),
+          size: item.size.trim(),
+          quantity: parseInt(item.quantity),
+          unit_price: parseFloat(item.price),
+          subtotal: parseFloat(item.price * item.quantity)
+        };
+      })
+    };
+
+    // Validate data before sending
+    console.log('=== ORDER DATA VALIDATION ===');
+    console.log('Order Data:', JSON.stringify(orderData, null, 2));
+    
+    // Check required fields
+    const requiredFields = ['name', 'phone', 'address', 'city'];
+    const missingFields = requiredFields.filter(field => !orderData[field] || !orderData[field].trim());
+    if (missingFields.length > 0) {
+      alert(`Missing required fields: ${missingFields.join(', ')}`);
       return;
     }
     
-    try {
-      setIsProcessing(true);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create order data FIRST while cart still has items
-      const orderData = {
-        order_id: 'ORD' + Date.now(),
-        customer_name: customerForm.name,
-        phone: customerForm.phone,
-        address: customerForm.address,
-        city: customerForm.city,
-        created_at: new Date().toISOString(),
-        notes: customerForm.notes || '',
-        items: items.map(item => ({
-          product_name: item.name,
-          color: item.color,
-          size: item.size,
-          quantity: item.quantity,
-          unit_price: item.price,
-          subtotal: item.price * item.quantity
-        })),
-        subtotal_price: totalPrice,
-        delivery_fee: getDeliveryFee(),
-        total_price: getTotalPrice(),
-        payment_method: customerForm.payment_method
-      };
-      
-      // Store order data with timestamp BEFORE clearing cart
-      const orderWithTimestamp = {
-        ...orderData,
-        timestamp: Date.now()
-      };
-      
-      // Store in sessionStorage first
-      sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
-      
-      // Wait a moment to ensure storage is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // NOW clear the cart after order is safely stored
-      clearCart();
-      
-      // Wait another moment before redirect
-      setTimeout(() => {
-        window.location.href = '/thank-you';
-      }, 200);
-      
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      alert('Failed to place order. Please try again.');
-    } finally {
-      setIsProcessing(false);
+    // Validate phone format (Jordanian)
+    const phoneRegex = /^07[0-9]{8}$/;
+    if (!phoneRegex.test(orderData.phone)) {
+      alert('Invalid phone format. Must be 07XXXXXXXX');
+      return;
     }
-  };
+    
+    // Validate items
+    if (!orderData.items || orderData.items.length === 0) {
+      alert('No items in order');
+      return;
+    }
+    
+    // Check each item
+    for (let item of orderData.items) {
+      console.log('Validating item:', item);
+      
+      // Check UUID format for product_id
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(item.product_id)) {
+        console.error('Invalid UUID for product_id:', item.product_id);
+        alert(`Invalid product ID format for ${item.product_name}`);
+        return;
+      }
+      
+      if (!item.product_name || !item.color || !item.size) {
+        alert(`Missing required item fields for ${item.product_name}`);
+        return;
+      }
+      
+      if (item.quantity < 1) {
+        alert(`Invalid quantity for ${item.product_name}`);
+        return;
+      }
+      
+      if (item.unit_price < 0) {
+        alert(`Invalid price for ${item.product_name}`);
+        return;
+      }
+    }
 
+    console.log('=== SENDING API REQUEST ===');
+
+    // ACTUAL API call to create order
+    const response = await ordersAPI.create(orderData);
+    
+    console.log('Order created successfully:', response);
+    
+    // Store order data for thank you page
+    const orderWithTimestamp = {
+      ...response.data,
+      timestamp: Date.now()
+    };
+    
+    sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
+    
+    // Clear the cart after successful order creation
+    clearCart();
+    
+    // Redirect to thank you page
+    setTimeout(() => {
+      window.location.href = '/thank-you';
+    }, 200);
+    
+  } catch (error) {
+    console.error('=== CHECKOUT ERROR ===');
+    console.error('Full error:', error);
+    console.error('Error response:', error.response);
+    
+    let errorMessage = 'Failed to place order. Please try again.';
+    
+    if (error.response?.data) {
+      console.error('Server response data:', error.response.data);
+      
+      // Handle validation errors specifically
+      if (error.response.data.errors) {
+        const validationErrors = error.response.data.errors
+          .map(err => `${err.param}: ${err.msg}`)
+          .join('\n');
+        errorMessage = `Validation failed:\n${validationErrors}`;
+      } else if (error.response.data.message) {
+        errorMessage = `Order failed: ${error.response.data.message}`;
+      }
+    } else if (error.message.includes('Cannot connect to server')) {
+      errorMessage = 'Cannot connect to server. Please ensure the backend is running and try again.';
+    }
+    
+    alert(errorMessage);
+  } finally {
+    setIsProcessing(false);
+  }
+};
   // Don't render if cart is empty
   if (items.length === 0) {
     return (

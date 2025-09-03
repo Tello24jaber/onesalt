@@ -124,8 +124,8 @@ const ThankYouPage = () => {
         {/* Receipt Card */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Receipt Header */}
-          <div className="bg-gray-900 text-white p-6 text-center">
-            <h2 className="text-2xl font-bold">OneSalt</h2>
+          <div className="bg-blue-300 text-white p-6 text-center">
+            <h2 className="text-2xl font-bold">onesalt</h2>
             <p className="text-sm opacity-75 mt-1">Premium Fashion</p>
           </div>
 
@@ -231,13 +231,7 @@ const ThankYouPage = () => {
             Continue Shopping
           </button>
           
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-full font-semibold border-2 border-gray-200 hover:border-gray-300 transition-all duration-300"
-          >
-            <Package className="mr-2 h-5 w-5" />
-            Print Receipt
-          </button>
+          
         </div>
       </div>
     </div>
