@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Products from './pages/Products';
+import ProductEdit from './pages/ProductEdit';
 import Login from './pages/log';
 
 function App() {
@@ -137,6 +138,8 @@ function App() {
         </Route>
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="products/new" element={<ProductEdit />} />          {/* Add this */}
+        <Route path="products/:id/edit" element={<ProductEdit />} />
       </Routes>
 
       <Toaster
