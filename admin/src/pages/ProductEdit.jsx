@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Star, StarIcon } from 'lucide-react';
 import { adminAPI } from '../services/api';
 import ChipInput from '../components/Common/ChipInput';
+import ImageUpload from '../components/Common/ImageUpload';
 import toast from 'react-hot-toast';
 
 export default function ProductEdit() {
@@ -54,6 +55,11 @@ export default function ProductEdit() {
       return;
     }
 
+    if (!formData.name.trim()) {
+      toast.error('Product name is required');
+      return;
+    }
+
     try {
       setSaving(true);
       
@@ -73,6 +79,7 @@ export default function ProductEdit() {
       
       navigate('/products');
     } catch (error) {
+      console.error('Save error:', error);
       toast.error(isEdit ? 'Failed to update product' : 'Failed to create product');
     } finally {
       setSaving(false);
@@ -84,6 +91,19 @@ export default function ProductEdit() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
+  };
+
+  // Toggle featured status with visual feedback
+  const toggleFeatured = () => {
+    const newFeaturedStatus = !formData.is_featured;
+    setFormData({ ...formData, is_featured: newFeaturedStatus });
+    
+    // Show immediate feedback
+    if (newFeaturedStatus) {
+      toast.success('Product marked as featured');
+    } else {
+      toast.success('Product removed from featured');
+    }
   };
 
   if (loading) {
@@ -106,9 +126,18 @@ export default function ProductEdit() {
         <h1 className="text-2xl font-bold text-gray-900">
           {isEdit ? 'Edit Product' : 'New Product'}
         </h1>
+        
+        {/* Featured Badge */}
+        {formData.is_featured && (
+          <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+            <Star size={14} fill="currentColor" />
+            Featured
+          </span>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl">
+        {/* Basic Information */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
           
@@ -121,13 +150,16 @@ export default function ProductEdit() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (!isEdit) {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      name: e.target.value,
-                      slug: generateSlug(e.target.value) 
-                    }));
+                  const newName = e.target.value;
+                  if (!isEdit || formData.slug === generateSlug(formData.name)) {
+                    // Auto-generate slug for new products or if slug matches current name
+                    setFormData({ 
+                      ...formData, 
+                      name: newName,
+                      slug: generateSlug(newName) 
+                    });
+                  } else {
+                    setFormData({ ...formData, name: newName });
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
@@ -150,7 +182,7 @@ export default function ProductEdit() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price *
+                Price (JD) *
               </label>
               <input
                 type="number"
@@ -167,12 +199,16 @@ export default function ProductEdit() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
-              />
+              >
+                <option value="general">General</option>
+                <option value="featured">Featured</option>
+                <option value="new">New Arrivals</option>
+                <option value="sale">Sale</option>
+              </select>
             </div>
 
             <div>
@@ -198,28 +234,29 @@ export default function ProductEdit() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+              placeholder="Describe your product..."
             />
           </div>
         </div>
 
+        {/* Product Images */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Media & Variants</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Images</h2>
+          <ImageUpload
+            images={formData.images}
+            onChange={(images) => setFormData({ ...formData, images })}
+            maxImages={5}
+          />
+        </div>
+
+        {/* Product Variants */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Variants</h2>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Images (URLs)
-              </label>
-              <ChipInput
-                value={formData.images}
-                onChange={(images) => setFormData({ ...formData, images })}
-                placeholder="Enter image URL and press Enter"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Colors
+                Available Colors
               </label>
               <ChipInput
                 value={formData.colors}
@@ -230,7 +267,7 @@ export default function ProductEdit() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sizes
+                Available Sizes
               </label>
               <ChipInput
                 value={formData.sizes}
@@ -241,38 +278,72 @@ export default function ProductEdit() {
           </div>
         </div>
 
+        {/* Product Settings */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Settings</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Settings</h2>
           
-          <div className="space-y-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
-              />
-              <div>
-                <div className="text-sm font-medium text-gray-900">Active</div>
-                <div className="text-sm text-gray-500">Product is visible to customers</div>
+          <div className="space-y-6">
+            {/* Active Status */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  formData.is_active ? 'bg-green-100' : 'bg-gray-100'
+                }`}>
+                  <div className={`w-6 h-6 rounded-full ${
+                    formData.is_active ? 'bg-green-500' : 'bg-gray-400'
+                  }`}></div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Product Status</div>
+                  <div className="text-sm text-gray-500">
+                    {formData.is_active ? 'Product is visible to customers' : 'Product is hidden from customers'}
+                  </div>
+                </div>
               </div>
-            </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+              </label>
+            </div>
 
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_featured}
-                onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
-              />
-              <div>
-                <div className="text-sm font-medium text-gray-900">Featured</div>
-                <div className="text-sm text-gray-500">Show in featured products section</div>
+            {/* Featured Status */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  formData.is_featured ? 'bg-yellow-100' : 'bg-gray-100'
+                }`}>
+                  <Star 
+                    size={24} 
+                    className={formData.is_featured ? 'text-yellow-500' : 'text-gray-400'}
+                    fill={formData.is_featured ? 'currentColor' : 'none'}
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Featured Product</div>
+                  <div className="text-sm text-gray-500">
+                    {formData.is_featured ? 'Product appears in featured section' : 'Product is not featured'}
+                  </div>
+                </div>
               </div>
-            </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.is_featured}
+                  onChange={toggleFeatured}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+              </label>
+            </div>
           </div>
         </div>
 
+        {/* Form Actions */}
         <div className="flex items-center gap-4">
           <button
             type="submit"
