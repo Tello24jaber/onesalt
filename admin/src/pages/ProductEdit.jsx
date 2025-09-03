@@ -37,8 +37,23 @@ export default function ProductEdit() {
     try {
       setLoading(true);
       const response = await adminAPI.getProduct(id);
-      setFormData(response);
+      console.log('Product API Response:', response); // Debug log
+      
+      // Handle Axios response structure
+      if (response && response.data && typeof response.data === 'object') {
+        setFormData(response.data);
+      }
+      // Handle direct response (non-Axios) 
+      else if (response && typeof response === 'object' && response.id) {
+        setFormData(response);
+      }
+      else {
+        console.warn('Unexpected product response structure:', response);
+        toast.error('Failed to load product data');
+        navigate('/products');
+      }
     } catch (error) {
+      console.error('Fetch product error:', error);
       toast.error('Failed to load product');
       navigate('/products');
     } finally {
