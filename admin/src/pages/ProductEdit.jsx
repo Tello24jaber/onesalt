@@ -37,7 +37,7 @@ export default function ProductEdit() {
     try {
       setLoading(true);
       const response = await adminAPI.getProduct(id);
-      setFormData(response.data);
+      setFormData(response);
     } catch (error) {
       toast.error('Failed to load product');
       navigate('/products');

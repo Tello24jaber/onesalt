@@ -33,8 +33,8 @@ export default function Products() {
       };
       
       const response = await adminAPI.getProducts(params);
-      setProducts(response.data.products);
-      setTotalPages(response.data.totalPages);
+      setProducts(response.products);
+setTotalPages(response.totalPages);
     } catch (error) {
       toast.error('Failed to load products');
     } finally {
