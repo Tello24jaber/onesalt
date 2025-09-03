@@ -21,37 +21,56 @@ export default function Products() {
     fetchProducts();
   }, [page, search, category, isActive]);
 
- 
-const fetchProducts = async () => {
-  try {
-    setLoading(true);
-    const params = {
-      page,
-      limit: 20,
-      ...(search && { search }),
-      ...(category && { category }),
-      ...(isActive !== '' && { is_active: isActive })
-    };
-    
-    const response = await adminAPI.getProducts(params);
-    
-    // Add safety checks for the response structure
-    if (response && response.products) {
-      setProducts(response.products);
-      setTotalPages(response.totalPages || 1);
-    } else {
-      // Fallback if response structure is different
-      setProducts(response || []);
-      setTotalPages(1);
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page,
+        limit: 20,
+        ...(search && { search }),
+        ...(category && { category }),
+        ...(isActive !== '' && { is_active: isActive })
+      };
+      
+      const response = await adminAPI.getProducts(params);
+      console.log('API Response:', response); // Debug log
+      
+      // More robust safety checks for the response structure
+      if (response && typeof response === 'object') {
+        // If response has a products property and it's an array
+        if (Array.isArray(response.products)) {
+          setProducts(response.products);
+          setTotalPages(response.totalPages || 1);
+        }
+        // If response itself is an array
+        else if (Array.isArray(response)) {
+          setProducts(response);
+          setTotalPages(1);
+        }
+        // If response has data property that's an array
+        else if (Array.isArray(response.data)) {
+          setProducts(response.data);
+          setTotalPages(response.totalPages || response.total_pages || 1);
+        }
+        // Default fallback
+        else {
+          console.warn('Unexpected response structure:', response);
+          setProducts([]);
+          setTotalPages(1);
+        }
+      } else {
+        console.warn('Invalid response:', response);
+        setProducts([]);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      toast.error('Failed to load products');
+      setProducts([]); // Ensure it's always an array
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('API Error:', error); // Add this for debugging
-    toast.error('Failed to load products');
-    setProducts([]); // Add this line to prevent undefined
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
@@ -71,6 +90,9 @@ const fetchProducts = async () => {
       currency: 'USD'
     }).format(price);
   };
+
+  // Ensure products is always an array before rendering
+  const safeProducts = Array.isArray(products) ? products : [];
 
   return (
     <div>
@@ -189,72 +211,79 @@ const fetchProducts = async () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          {product.images?.[0] && (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.name}
-                              className="w-10 h-10 rounded-lg object-cover mr-3"
-                            />
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {product.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {product.slug}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatPrice(product.price)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.stock}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.category}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs leading-5 font-semibold rounded-full ${
-                          product.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {product.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                        {product.is_featured && (
-                          <span className="ml-2 inline-flex px-2 py-1 text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            Featured
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={`/products/${product.id}/edit`}
-                            className="text-sky-600 hover:text-sky-700"
-                          >
-                            <Edit size={18} />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                  {safeProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                        No products found
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    safeProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            {product.images?.[0] && (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-10 h-10 rounded-lg object-cover mr-3"
+                              />
+                            )}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {product.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {product.slug}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatPrice(product.price)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {product.stock}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {product.category}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs leading-5 font-semibold rounded-full ${
+                            product.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {product.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                          {product.is_featured && (
+                            <span className="ml-2 inline-flex px-2 py-1 text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                              Featured
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/products/${product.id}/edit`}
+                              className="text-sky-600 hover:text-sky-700"
+                            >
+                              <Edit size={18} />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(product.id, product.name)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-
 
             {/* Pagination */}
             {totalPages > 1 && (

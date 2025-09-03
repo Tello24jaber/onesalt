@@ -135,11 +135,11 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="orders/:id" element={<OrderDetail />} />
           <Route path="products" element={<Products />} />
+          <Route path="products/new" element={<ProductEdit />} />
+          <Route path="products/:id/edit" element={<ProductEdit />} />
         </Route>
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="products/new" element={<ProductEdit />} />          {/* Add this */}
-        <Route path="products/:id/edit" element={<ProductEdit />} />
       </Routes>
 
       <Toaster
