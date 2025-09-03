@@ -21,26 +21,37 @@ export default function Products() {
     fetchProducts();
   }, [page, search, category, isActive]);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const params = {
-        page,
-        limit: 20,
-        ...(search && { search }),
-        ...(category && { category }),
-        ...(isActive !== '' && { is_active: isActive })
-      };
-      
-      const response = await adminAPI.getProducts(params);
+ 
+const fetchProducts = async () => {
+  try {
+    setLoading(true);
+    const params = {
+      page,
+      limit: 20,
+      ...(search && { search }),
+      ...(category && { category }),
+      ...(isActive !== '' && { is_active: isActive })
+    };
+    
+    const response = await adminAPI.getProducts(params);
+    
+    // Add safety checks for the response structure
+    if (response && response.products) {
       setProducts(response.products);
-setTotalPages(response.totalPages);
-    } catch (error) {
-      toast.error('Failed to load products');
-    } finally {
-      setLoading(false);
+      setTotalPages(response.totalPages || 1);
+    } else {
+      // Fallback if response structure is different
+      setProducts(response || []);
+      setTotalPages(1);
     }
-  };
+  } catch (error) {
+    console.error('API Error:', error); // Add this for debugging
+    toast.error('Failed to load products');
+    setProducts([]); // Add this line to prevent undefined
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
@@ -243,6 +254,7 @@ setTotalPages(response.totalPages);
                 </tbody>
               </table>
             </div>
+
 
             {/* Pagination */}
             {totalPages > 1 && (
