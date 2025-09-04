@@ -224,7 +224,13 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: 'DECREMENT_QUANTITY', payload: { id } });
   };
 
-  
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+    toast.success('Cart cleared', {
+      position: "bottom-right",
+      autoClose: 2000,
+    });
+  };
 
   // Helper function to get item quantity
   const getItemQuantity = (productId, color, size) => {
