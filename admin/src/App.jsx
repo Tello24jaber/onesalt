@@ -140,7 +140,6 @@ function App() {
         </Route>
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="orders/:id/edit" element={<OrderEdit />} />
       </Routes>
 
       <Toaster
