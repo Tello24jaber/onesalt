@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, CreditCard, RefreshCw, Phone, MapPin, User, FileText, 
-  Navigation, DollarSign, Smartphone, Shield, Copy, Check
+  Navigation, DollarSign, Smartphone, Shield, Copy, Check, X
 } from 'lucide-react';
 import { ordersAPI } from '../services/api'; 
 import { useCart } from '../context/ontext';
@@ -65,8 +65,6 @@ const CheckoutPage = () => {
     phone: { isValid: null, message: '' },
     address: { isValid: null, message: '' }
   });
-
-  
 
   // Calculate delivery fee based on selected city
   const getDeliveryFee = () => {
@@ -189,6 +187,18 @@ const CheckoutPage = () => {
     );
   };
 
+  // Clear/Remove location
+  const removeLocation = () => {
+    setLocationData(null);
+    setLocationCopied(false);
+    setCustomerForm(prev => ({
+      ...prev,
+      location_coordinates: '',
+      location_address: ''
+    }));
+    alert('Location removed successfully!');
+  };
+
   // Copy location to clipboard
   const copyLocationToClipboard = () => {
     if (locationData?.link) {
@@ -288,163 +298,165 @@ const CheckoutPage = () => {
     
     return true;
   };
-// Enhanced handleCheckout with debugging for CheckoutPage.jsx
-const handleCheckout = async () => {
-  if (!validateForm()) return;
-  
-  // Additional check to ensure cart isn't empty at checkout time
-  if (!items || items.length === 0) {
-    alert('Your cart is empty. Please add some items first.');
-    window.location.href = '/products';
-    return;
-  }
-  
-  try {
-    setIsProcessing(true);
-    
-    // Parse location coordinates
-    let latitude = null;
-    let longitude = null;
-    if (customerForm.location_coordinates) {
-      const coords = customerForm.location_coordinates.split(',');
-      if (coords.length === 2) {
-        latitude = parseFloat(coords[0]);
-        longitude = parseFloat(coords[1]);
-      }
-    }
 
-    // Create order data matching backend validation expectations
-    const orderData = {
-      name: customerForm.name.trim(),
-      phone: customerForm.phone.trim(),
-      address: customerForm.address.trim(),
-      city: customerForm.city.trim(),
-      notes: customerForm.notes?.trim() || '',
-      total_price: getTotalPrice(),
-      payment_method: customerForm.payment_method,
-      location_link: locationData?.link || null,
-      latitude: latitude,
-      longitude: longitude,
-      items: items.map(item => {
-        // Generate proper UUID if item doesn't have valid ID
-        const productId = (item.id && item.id.length === 36) ? item.id : crypto.randomUUID();
+  // Enhanced handleCheckout with debugging for CheckoutPage.jsx
+  const handleCheckout = async () => {
+    if (!validateForm()) return;
+    
+    // Additional check to ensure cart isn't empty at checkout time
+    if (!items || items.length === 0) {
+      alert('Your cart is empty. Please add some items first.');
+      window.location.href = '/products';
+      return;
+    }
+    
+    try {
+      setIsProcessing(true);
+      
+      // Parse location coordinates
+      let latitude = null;
+      let longitude = null;
+      if (customerForm.location_coordinates) {
+        const coords = customerForm.location_coordinates.split(',');
+        if (coords.length === 2) {
+          latitude = parseFloat(coords[0]);
+          longitude = parseFloat(coords[1]);
+        }
+      }
+
+      // Create order data matching backend validation expectations
+      const orderData = {
+        name: customerForm.name.trim(),
+        phone: customerForm.phone.trim(),
+        address: customerForm.address.trim(),
+        city: customerForm.city.trim(),
+        notes: customerForm.notes?.trim() || '',
+        total_price: getTotalPrice(),
+        payment_method: customerForm.payment_method,
+        location_link: locationData?.link || null,
+        latitude: latitude,
+        longitude: longitude,
+        items: items.map(item => {
+          // Generate proper UUID if item doesn't have valid ID
+          const productId = (item.id && item.id.length === 36) ? item.id : crypto.randomUUID();
+          
+          return {
+            product_id: productId,
+            product_name: item.name.trim(),
+            color: item.color.trim(),
+            size: item.size.trim(),
+            quantity: parseInt(item.quantity),
+            unit_price: parseFloat(item.price),
+            subtotal: parseFloat(item.price * item.quantity)
+          };
+        })
+      };
+
+      // Validate data before sending
+      console.log('=== ORDER DATA VALIDATION ===');
+      console.log('Order Data:', JSON.stringify(orderData, null, 2));
+      
+      // Check required fields
+      const requiredFields = ['name', 'phone', 'address', 'city'];
+      const missingFields = requiredFields.filter(field => !orderData[field] || !orderData[field].trim());
+      if (missingFields.length > 0) {
+        alert(`Missing required fields: ${missingFields.join(', ')}`);
+        return;
+      }
+      
+      // Validate phone format (Jordanian)
+      const phoneRegex = /^07[0-9]{8}$/;
+      if (!phoneRegex.test(orderData.phone)) {
+        alert('Invalid phone format. Must be 07XXXXXXXX');
+        return;
+      }
+      
+      // Validate items
+      if (!orderData.items || orderData.items.length === 0) {
+        alert('No items in order');
+        return;
+      }
+      
+      // Check each item
+      for (let item of orderData.items) {
+        console.log('Validating item:', item);
         
-        return {
-          product_id: productId,
-          product_name: item.name.trim(),
-          color: item.color.trim(),
-          size: item.size.trim(),
-          quantity: parseInt(item.quantity),
-          unit_price: parseFloat(item.price),
-          subtotal: parseFloat(item.price * item.quantity)
-        };
-      })
-    };
+        // Check UUID format for product_id
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(item.product_id)) {
+          console.error('Invalid UUID for product_id:', item.product_id);
+          alert(`Invalid product ID format for ${item.product_name}`);
+          return;
+        }
+        
+        if (!item.product_name || !item.color || !item.size) {
+          alert(`Missing required item fields for ${item.product_name}`);
+          return;
+        }
+        
+        if (item.quantity < 1) {
+          alert(`Invalid quantity for ${item.product_name}`);
+          return;
+        }
+        
+        if (item.unit_price < 0) {
+          alert(`Invalid price for ${item.product_name}`);
+          return;
+        }
+      }
 
-    // Validate data before sending
-    console.log('=== ORDER DATA VALIDATION ===');
-    console.log('Order Data:', JSON.stringify(orderData, null, 2));
-    
-    // Check required fields
-    const requiredFields = ['name', 'phone', 'address', 'city'];
-    const missingFields = requiredFields.filter(field => !orderData[field] || !orderData[field].trim());
-    if (missingFields.length > 0) {
-      alert(`Missing required fields: ${missingFields.join(', ')}`);
-      return;
-    }
-    
-    // Validate phone format (Jordanian)
-    const phoneRegex = /^07[0-9]{8}$/;
-    if (!phoneRegex.test(orderData.phone)) {
-      alert('Invalid phone format. Must be 07XXXXXXXX');
-      return;
-    }
-    
-    // Validate items
-    if (!orderData.items || orderData.items.length === 0) {
-      alert('No items in order');
-      return;
-    }
-    
-    // Check each item
-    for (let item of orderData.items) {
-      console.log('Validating item:', item);
-      
-      // Check UUID format for product_id
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(item.product_id)) {
-        console.error('Invalid UUID for product_id:', item.product_id);
-        alert(`Invalid product ID format for ${item.product_name}`);
-        return;
-      }
-      
-      if (!item.product_name || !item.color || !item.size) {
-        alert(`Missing required item fields for ${item.product_name}`);
-        return;
-      }
-      
-      if (item.quantity < 1) {
-        alert(`Invalid quantity for ${item.product_name}`);
-        return;
-      }
-      
-      if (item.unit_price < 0) {
-        alert(`Invalid price for ${item.product_name}`);
-        return;
-      }
-    }
+      console.log('=== SENDING API REQUEST ===');
 
-    console.log('=== SENDING API REQUEST ===');
-
-    // ACTUAL API call to create order
-    const response = await ordersAPI.create(orderData);
-    
-    console.log('Order created successfully:', response);
-    
-    // Store order data for thank you page
-    const orderWithTimestamp = {
-      ...response.data,
-      timestamp: Date.now()
-    };
-    
-    sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
-    
-    // Clear the cart after successful order creation
-    clearCart();
-    
-    // Redirect to thank you page
-    setTimeout(() => {
-      window.location.href = '/thank-you';
-    }, 200);
-    
-  } catch (error) {
-    console.error('=== CHECKOUT ERROR ===');
-    console.error('Full error:', error);
-    console.error('Error response:', error.response);
-    
-    let errorMessage = 'Failed to place order. Please try again.';
-    
-    if (error.response?.data) {
-      console.error('Server response data:', error.response.data);
+      // ACTUAL API call to create order
+      const response = await ordersAPI.create(orderData);
       
-      // Handle validation errors specifically
-      if (error.response.data.errors) {
-        const validationErrors = error.response.data.errors
-          .map(err => `${err.param}: ${err.msg}`)
-          .join('\n');
-        errorMessage = `Validation failed:\n${validationErrors}`;
-      } else if (error.response.data.message) {
-        errorMessage = `Order failed: ${error.response.data.message}`;
+      console.log('Order created successfully:', response);
+      
+      // Store order data for thank you page
+      const orderWithTimestamp = {
+        ...response.data,
+        timestamp: Date.now()
+      };
+      
+      sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
+      
+      // Clear the cart after successful order creation
+      clearCart();
+      
+      // Redirect to thank you page
+      setTimeout(() => {
+        window.location.href = '/thank-you';
+      }, 200);
+      
+    } catch (error) {
+      console.error('=== CHECKOUT ERROR ===');
+      console.error('Full error:', error);
+      console.error('Error response:', error.response);
+      
+      let errorMessage = 'Failed to place order. Please try again.';
+      
+      if (error.response?.data) {
+        console.error('Server response data:', error.response.data);
+        
+        // Handle validation errors specifically
+        if (error.response.data.errors) {
+          const validationErrors = error.response.data.errors
+            .map(err => `${err.param}: ${err.msg}`)
+            .join('\n');
+          errorMessage = `Validation failed:\n${validationErrors}`;
+        } else if (error.response.data.message) {
+          errorMessage = `Order failed: ${error.response.data.message}`;
+        }
+      } else if (error.message.includes('Cannot connect to server')) {
+        errorMessage = 'Cannot connect to server. Please ensure the backend is running and try again.';
       }
-    } else if (error.message.includes('Cannot connect to server')) {
-      errorMessage = 'Cannot connect to server. Please ensure the backend is running and try again.';
+      
+      alert(errorMessage);
+    } finally {
+      setIsProcessing(false);
     }
-    
-    alert(errorMessage);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
+
   // Don't render if cart is empty
   if (items.length === 0) {
     return (
@@ -570,31 +582,43 @@ const handleCheckout = async () => {
                     </select>
                   </div>
 
-                  {/* Location Button */}
+                  {/* Location Button - ENHANCED */}
                   <div className="border-2 border-dashed border-gray-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                         <Navigation className="h-4 w-4" />
                         Share Precise Location (optional but recommended)
                       </label>
-                      <button
-                        type="button"
-                        onClick={getCurrentLocation}
-                        disabled={locationLoading}
-                        className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-                      >
-                        {locationLoading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            Getting Location...
-                          </>
-                        ) : (
-                          <>
-                            <Navigation className="h-4 w-4" />
-                            Get My Location
-                          </>
-                        )}
-                      </button>
+                      
+                      {!locationData ? (
+                        <button
+                          type="button"
+                          onClick={getCurrentLocation}
+                          disabled={locationLoading}
+                          className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                        >
+                          {locationLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              Getting Location...
+                            </>
+                          ) : (
+                            <>
+                              <Navigation className="h-4 w-4" />
+                              Get My Location
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={removeLocation}
+                          className="px-3 py-2 sm:px-4 sm:py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                        >
+                          <X className="h-4 w-4" />
+                          Remove Location
+                        </button>
+                      )}
                     </div>
                     
                     {locationData && (
@@ -604,14 +628,24 @@ const handleCheckout = async () => {
                             <p className="text-sm text-green-700 font-medium">Location Captured</p>
                             <p className="text-xs text-gray-600 mt-1 break-all">{locationData.address}</p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={copyLocationToClipboard}
-                            className="ml-2 p-2 hover:bg-green-100 rounded-lg transition-colors"
-                            title="Copy location link"
-                          >
-                            {locationCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-gray-600" />}
-                          </button>
+                          <div className="flex items-center gap-2 ml-2">
+                            <button
+                              type="button"
+                              onClick={copyLocationToClipboard}
+                              className="p-2 hover:bg-green-100 rounded-lg transition-colors"
+                              title="Copy location link"
+                            >
+                              {locationCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-gray-600" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={removeLocation}
+                              className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                              title="Remove location"
+                            >
+                              <X className="h-4 w-4 text-red-600" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -822,7 +856,7 @@ const handleCheckout = async () => {
                     <strong>Quality Guarantee:</strong>
                     <p className="mt-1">100% authentic products with return policy</p>
                   </div>
-                  </div>
+                </div>
               </div>
             </div>
           </div>
