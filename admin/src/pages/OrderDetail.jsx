@@ -21,6 +21,7 @@ export default function OrderDetail() {
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -29,7 +30,12 @@ export default function OrderDetail() {
     city: '',
     notes: '',
     shipping_fee: 0,
-    status: 'pending'
+    delivery_fee: 0,
+    status: 'pending',
+    customer_email: '',
+    payment_method: 'cash',
+    tracking_number: '',
+    estimated_delivery: ''
   });
 
   const [newItem, setNewItem] = useState({
@@ -49,17 +55,42 @@ export default function OrderDetail() {
     try {
       setLoading(true);
       const response = await adminAPI.getOrder(id);
-      setOrder(response.data);
-      setFormData({
-        customer_name: response.data.customer_name,
-        phone: response.data.phone,
-        address: response.data.address,
-        city: response.data.city,
-        notes: response.data.notes || '',
-        shipping_fee: response.data.shipping_fee,
-        status: response.data.status
-      });
+      console.log('Order Detail API Response:', response); // Debug log
+      
+      let orderData = null;
+      
+      // Handle Axios response structure
+      if (response && response.data && typeof response.data === 'object') {
+        orderData = response.data;
+      }
+      // Handle direct response (non-Axios)
+      else if (response && typeof response === 'object' && response.id) {
+        orderData = response;
+      }
+      
+      if (orderData) {
+        setOrder(orderData);
+        setFormData({
+          customer_name: orderData.customer_name || '',
+          phone: orderData.phone || '',
+          address: orderData.address || orderData.shipping_address?.street || '',
+          city: orderData.city || orderData.shipping_address?.city || '',
+          notes: orderData.notes || '',
+          shipping_fee: orderData.shipping_fee || orderData.delivery_fee || 0,
+          delivery_fee: orderData.delivery_fee || orderData.shipping_fee || 0,
+          status: orderData.status || 'pending',
+          customer_email: orderData.customer_email || orderData.email || '',
+          payment_method: orderData.payment_method || 'cash',
+          tracking_number: orderData.tracking_number || '',
+          estimated_delivery: orderData.estimated_delivery || ''
+        });
+      } else {
+        console.warn('Unexpected order response structure:', response);
+        toast.error('Failed to load order data');
+        navigate('/orders');
+      }
     } catch (error) {
+      console.error('Fetch order error:', error);
       toast.error('Failed to load order');
       navigate('/orders');
     } finally {
@@ -70,11 +101,19 @@ export default function OrderDetail() {
   const handleUpdateOrder = async () => {
     try {
       setSaving(true);
-      await adminAPI.updateOrder(id, formData);
+      
+      const dataToSend = {
+        ...formData,
+        shipping_fee: parseFloat(formData.shipping_fee),
+        delivery_fee: parseFloat(formData.delivery_fee)
+      };
+      
+      await adminAPI.updateOrder(id, dataToSend);
       toast.success('Order updated successfully');
       setEditMode(false);
       fetchOrder();
     } catch (error) {
+      console.error('Update order error:', error);
       toast.error('Failed to update order');
     } finally {
       setSaving(false);
@@ -87,7 +126,26 @@ export default function OrderDetail() {
       toast.success('Status updated successfully');
       fetchOrder();
     } catch (error) {
+      console.error('Update status error:', error);
       toast.error('Failed to update status');
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!window.confirm(`Are you sure you want to delete this order? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await adminAPI.deleteOrder(id);
+      toast.success('Order deleted successfully');
+      navigate('/orders');
+    } catch (error) {
+      console.error('Delete order error:', error);
+      toast.error('Failed to delete order');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -98,12 +156,15 @@ export default function OrderDetail() {
     }
 
     try {
-      await adminAPI.addOrderItem(id, {
+      const itemData = {
         ...newItem,
         product_id: newItem.product_id || crypto.randomUUID(),
         quantity: parseInt(newItem.quantity),
-        unit_price: parseFloat(newItem.unit_price)
-      });
+        unit_price: parseFloat(newItem.unit_price),
+        subtotal: parseInt(newItem.quantity) * parseFloat(newItem.unit_price)
+      };
+
+      await adminAPI.addOrderItem(id, itemData);
       toast.success('Item added successfully');
       setShowAddItem(false);
       setNewItem({
@@ -116,21 +177,26 @@ export default function OrderDetail() {
       });
       fetchOrder();
     } catch (error) {
+      console.error('Add item error:', error);
       toast.error('Failed to add item');
     }
   };
 
   const handleUpdateItem = async (itemId, updates) => {
     try {
-      await adminAPI.updateOrderItem(id, itemId, {
+      const updatedItem = {
         ...updates,
         quantity: parseInt(updates.quantity),
-        unit_price: parseFloat(updates.unit_price)
-      });
+        unit_price: parseFloat(updates.unit_price),
+        subtotal: parseInt(updates.quantity) * parseFloat(updates.unit_price)
+      };
+
+      await adminAPI.updateOrderItem(id, itemId, updatedItem);
       toast.success('Item updated successfully');
       setEditingItem(null);
       fetchOrder();
     } catch (error) {
+      console.error('Update item error:', error);
       toast.error('Failed to update item');
     }
   };
@@ -142,6 +208,7 @@ export default function OrderDetail() {
         toast.success('Item deleted successfully');
         fetchOrder();
       } catch (error) {
+        console.error('Delete item error:', error);
         toast.error('Failed to delete item');
       }
     }
@@ -152,13 +219,14 @@ export default function OrderDetail() {
       style: 'currency',
       currency: 'JOD',
       minimumFractionDigits: 2
-    }).format(amount).replace('JOD', 'JD');
+    }).format(amount || 0).replace('JOD', 'JD');
   };
 
   const getStatusBadgeClass = (status) => {
     const classes = {
       pending: 'bg-yellow-100 text-yellow-800',
-      processing: 'bg-blue-100 text-blue-800',
+      confirmed: 'bg-blue-100 text-blue-800',
+      processing: 'bg-orange-100 text-orange-800',
       shipped: 'bg-purple-100 text-purple-800',
       delivered: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800'
@@ -178,7 +246,9 @@ export default function OrderDetail() {
     return <div>Order not found</div>;
   }
 
-  const subtotal = order.items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+  const subtotal = order.items?.reduce((sum, item) => sum + parseFloat(item.subtotal || (item.quantity * item.unit_price)), 0) || 0;
+  const shippingFee = parseFloat(formData.shipping_fee || formData.delivery_fee || 0);
+  const totalAmount = subtotal + shippingFee;
 
   return (
     <div>
@@ -192,31 +262,47 @@ export default function OrderDetail() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Order #{order.id.substring(0, 8)}
+              Order #{order.order_number || order.id.substring(0, 8)}
             </h1>
             <p className="text-sm text-gray-500">
-              Created {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
+              Created {format(new Date(order.created_at || order.createdAt), 'MMM dd, yyyy HH:mm')}
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowReceipt(true)}
-          className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 inline-flex items-center gap-2"
-        >
-          <Printer size={20} />
-          Print Receipt
-        </button>
+        
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowReceipt(true)}
+            className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 inline-flex items-center gap-2"
+          >
+            <Printer size={20} />
+            Print Receipt
+          </button>
+          
+          <button
+            onClick={handleDeleteOrder}
+            disabled={deleting}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            {deleting ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <Trash2 size={20} />
+            )}
+            {deleting ? 'Deleting...' : 'Delete Order'}
+          </button>
+        </div>
       </div>
 
       {/* Order Status */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Status</h2>
         <div className="flex flex-wrap gap-2">
-          {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+          {['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
             <button
               key={status}
               onClick={() => handleUpdateStatus(status)}
-              className={`px-4 py-2 rounded-lg capitalize ${
+              className={`px-4 py-2 rounded-lg capitalize transition-colors ${
                 order.status === status
                   ? getStatusBadgeClass(status)
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -235,7 +321,7 @@ export default function OrderDetail() {
           {!editMode ? (
             <button
               onClick={() => setEditMode(true)}
-              className="text-sky-600 hover:text-sky-700"
+              className="text-sky-600 hover:text-sky-700 p-2 rounded-lg hover:bg-sky-50"
             >
               <Edit2 size={20} />
             </button>
@@ -244,21 +330,27 @@ export default function OrderDetail() {
               <button
                 onClick={handleUpdateOrder}
                 disabled={saving}
-                className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 disabled:opacity-50"
+                className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 disabled:opacity-50 inline-flex items-center gap-2"
               >
+                <Save size={16} />
                 {saving ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={() => {
                   setEditMode(false);
                   setFormData({
-                    customer_name: order.customer_name,
-                    phone: order.phone,
-                    address: order.address,
-                    city: order.city,
+                    customer_name: order.customer_name || '',
+                    phone: order.phone || '',
+                    address: order.address || order.shipping_address?.street || '',
+                    city: order.city || order.shipping_address?.city || '',
                     notes: order.notes || '',
-                    shipping_fee: order.shipping_fee,
-                    status: order.status
+                    shipping_fee: order.shipping_fee || order.delivery_fee || 0,
+                    delivery_fee: order.delivery_fee || order.shipping_fee || 0,
+                    status: order.status || 'pending',
+                    customer_email: order.customer_email || order.email || '',
+                    payment_method: order.payment_method || 'cash',
+                    tracking_number: order.tracking_number || '',
+                    estimated_delivery: order.estimated_delivery || ''
                   });
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -283,7 +375,7 @@ export default function OrderDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
               />
             ) : (
-              <p className="text-gray-900">{order.customer_name}</p>
+              <p className="text-gray-900">{order.customer_name || 'N/A'}</p>
             )}
           </div>
 
@@ -300,7 +392,24 @@ export default function OrderDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
               />
             ) : (
-              <p className="text-gray-900">{order.phone}</p>
+              <p className="text-gray-900">{order.phone || 'N/A'}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <MessageSquare size={16} />
+              Email
+            </label>
+            {editMode ? (
+              <input
+                type="email"
+                value={formData.customer_email}
+                onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+              />
+            ) : (
+              <p className="text-gray-900">{order.customer_email || order.email || 'N/A'}</p>
             )}
           </div>
 
@@ -317,7 +426,7 @@ export default function OrderDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
               />
             ) : (
-              <p className="text-gray-900">{order.address}</p>
+              <p className="text-gray-900">{order.address || order.shipping_address?.street || 'N/A'}</p>
             )}
           </div>
 
@@ -334,7 +443,25 @@ export default function OrderDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
               />
             ) : (
-              <p className="text-gray-900">{order.city}</p>
+              <p className="text-gray-900">{order.city || order.shipping_address?.city || 'N/A'}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
+              Delivery Fee (JD)
+            </label>
+            {editMode ? (
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.delivery_fee}
+                onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value, shipping_fee: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+              />
+            ) : (
+              <p className="text-gray-900">{formatCurrency(order.shipping_fee || order.delivery_fee)}</p>
             )}
           </div>
 
@@ -349,29 +476,41 @@ export default function OrderDetail() {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                placeholder="Add any notes about this order..."
               />
             ) : (
               <p className="text-gray-900">{order.notes || 'No notes'}</p>
             )}
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Shipping Fee
-            </label>
-            {editMode ? (
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.shipping_fee}
-                onChange={(e) => setFormData({ ...formData, shipping_fee: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
-              />
-            ) : (
-              <p className="text-gray-900">{formatCurrency(order.shipping_fee)}</p>
-            )}
-          </div>
+          {editMode && (
+            <>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Tracking Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.tracking_number}
+                  onChange={(e) => setFormData({ ...formData, tracking_number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                  placeholder="Enter tracking number"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Estimated Delivery
+                </label>
+                <input
+                  type="date"
+                  value={formData.estimated_delivery}
+                  onChange={(e) => setFormData({ ...formData, estimated_delivery: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -437,6 +576,29 @@ export default function OrderDetail() {
               <p className="text-gray-900 text-sm bg-gray-50 p-2 rounded">{order.map_address}</p>
             </div>
           )}
+
+          {/* Tracking Info */}
+          {(order.tracking_number || formData.tracking_number) && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Tracking Number
+              </label>
+              <p className="text-gray-900 font-mono text-sm bg-gray-50 p-2 rounded">
+                {order.tracking_number || formData.tracking_number}
+              </p>
+            </div>
+          )}
+
+          {(order.estimated_delivery || formData.estimated_delivery) && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Estimated Delivery
+              </label>
+              <p className="text-gray-900 text-sm">
+                {format(new Date(order.estimated_delivery || formData.estimated_delivery), 'MMM dd, yyyy')}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -489,7 +651,7 @@ export default function OrderDetail() {
               />
               <input
                 type="number"
-                placeholder="Unit Price"
+                placeholder="Unit Price (JD)"
                 step="0.01"
                 min="0"
                 value={newItem.unit_price}
@@ -606,7 +768,7 @@ export default function OrderDetail() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleUpdateItem(item.id, item)}
-                            className="text-green-600 hover:text-green-700"
+                            className="text-green-600 hover:text-green-700 p-1 rounded hover:bg-green-50"
                           >
                             <Save size={16} />
                           </button>
@@ -615,7 +777,7 @@ export default function OrderDetail() {
                               setEditingItem(null);
                               fetchOrder();
                             }}
-                            className="text-gray-600 hover:text-gray-700"
+                            className="text-gray-600 hover:text-gray-700 p-1 rounded hover:bg-gray-50"
                           >
                             <X size={16} />
                           </button>
@@ -629,18 +791,18 @@ export default function OrderDetail() {
                       <td className="px-4 py-2 text-sm">{item.size}</td>
                       <td className="px-4 py-2 text-sm">{item.quantity}</td>
                       <td className="px-4 py-2 text-sm">{formatCurrency(item.unit_price)}</td>
-                      <td className="px-4 py-2 text-sm font-medium">{formatCurrency(item.subtotal)}</td>
+                      <td className="px-4 py-2 text-sm font-medium">{formatCurrency(item.subtotal || (item.quantity * item.unit_price))}</td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setEditingItem(item.id)}
-                            className="text-sky-600 hover:text-sky-700"
+                            className="text-sky-600 hover:text-sky-700 p-1 rounded hover:bg-sky-50"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item.id)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -663,12 +825,12 @@ export default function OrderDetail() {
                 <span className="font-medium">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-gray-600">Shipping:</span>
-                <span className="font-medium">{formatCurrency(order.shipping_fee)}</span>
+                <span className="text-gray-600">Delivery Fee:</span>
+                <span className="font-medium">{formatCurrency(shippingFee)}</span>
               </div>
               <div className="flex justify-between py-2 text-lg font-bold border-t pt-2">
                 <span>Total:</span>
-                <span>{formatCurrency(order.total_price)}</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
           </div>
@@ -686,9 +848,10 @@ export default function OrderDetail() {
     </div>
   );
 }
+
 // Professional Print Receipt Component - CLEAN VERSION
 function OrderReceipt({ order, onClose, formatCurrency }) {
-  const subtotal = order.items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+  const subtotal = order.items?.reduce((sum, item) => sum + parseFloat(item.subtotal || (item.quantity * item.unit_price)), 0) || 0;
   
   // Calculate shipping fee based on city
   const calculateShippingFee = (city) => {
@@ -698,7 +861,7 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
     return isAmman ? 2 : 3;
   };
 
-  const shippingFee = order.shipping_fee || calculateShippingFee(order.city);
+  const shippingFee = order.shipping_fee || order.delivery_fee || calculateShippingFee(order.city);
 
   const handlePrint = () => {
     // Create a new window for printing to avoid blank page issue
@@ -709,7 +872,7 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Receipt - Order #${order.id.substring(0, 8).toUpperCase()}</title>
+          <title>Receipt - Order #${(order.order_number || order.id.substring(0, 8)).toUpperCase()}</title>
           <style>
             body { 
               font-family: Arial, sans-serif; 
@@ -898,7 +1061,6 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
                 <h1 className="store-title text-2xl font-bold mb-1">OneSalt</h1>
                 <p className="store-subtitle text-sm opacity-90">Fashion Store</p>
                 <div className="store-contact border-t border-gray-600 mt-3 pt-2">
-                
                   <p className="text-xs">Email: wearonesalt@gmail.com</p>
                 </div>
               </div>
@@ -907,11 +1069,11 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
               <div className="receipt-info p-4 border-b border-gray-200">
                 <div className="info-row flex justify-between items-center mb-2">
                   <span className="label font-bold">Receipt #:</span>
-                  <span className="font-mono text-sm">{order.id.substring(0, 8).toUpperCase()}</span>
+                  <span className="font-mono text-sm">{(order.order_number || order.id.substring(0, 8)).toUpperCase()}</span>
                 </div>
                 <div className="info-row flex justify-between items-center mb-2">
                   <span className="label font-bold">Date:</span>
-                  <span className="text-sm">{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                  <span className="text-sm">{format(new Date(order.created_at || order.createdAt), 'dd/MM/yyyy HH:mm')}</span>
                 </div>
                 <div className="info-row flex justify-between items-center">
                   <span className="label font-bold">Status:</span>
@@ -932,8 +1094,8 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
                 <div className="customer-info text-sm space-y-1">
                   <div><strong>Name:</strong> {order.customer_name}</div>
                   <div><strong>Phone:</strong> {order.phone}</div>
-                  <div><strong>Address:</strong> {order.address}</div>
-                  <div><strong>City:</strong> {order.city}</div>
+                  <div><strong>Address:</strong> {order.address || order.shipping_address?.street}</div>
+                  <div><strong>City:</strong> {order.city || order.shipping_address?.city}</div>
                   {order.notes && <div><strong>Notes:</strong> {order.notes}</div>}
                 </div>
               </div>
@@ -949,7 +1111,7 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
                     </div>
                     <div className="item-pricing flex justify-between items-center text-sm">
                       <span>{item.quantity} × {formatCurrency(item.unit_price)}</span>
-                      <span className="font-medium">{formatCurrency(item.subtotal)}</span>
+                      <span className="font-medium">{formatCurrency(item.subtotal || (item.quantity * item.unit_price))}</span>
                     </div>
                   </div>
                 ))}
@@ -963,7 +1125,7 @@ function OrderReceipt({ order, onClose, formatCurrency }) {
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="total-row flex justify-between text-sm">
-                    <span>Delivery Fee ({order.city}):</span>
+                    <span>Delivery Fee ({order.city || order.shipping_address?.city}):</span>
                     <span>{formatCurrency(shippingFee)}</span>
                   </div>
                   <div className="total-final flex justify-between text-lg font-bold border-t pt-2">

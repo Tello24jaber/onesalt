@@ -260,7 +260,8 @@ export default function ProductEdit() {
           <ImageUpload
             images={formData.images}
             onChange={(images) => setFormData({ ...formData, images })}
-            maxImages={5}
+            maxImages={8}
+            maxSizeMB={10}
           />
         </div>
 

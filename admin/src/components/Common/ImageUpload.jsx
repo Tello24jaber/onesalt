@@ -1,86 +1,91 @@
-import { useState, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const ImageUpload = ({ images = [], onChange, maxImages = 5 }) => {
+export default function ImageUpload({ 
+  images = [], 
+  onChange, 
+  maxImages = 8,
+  maxSizeMB = 10 
+}) {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // Convert file to base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  // Handle file selection
-  const handleFileSelect = useCallback(async (files) => {
-    if (images.length + files.length > maxImages) {
-      alert(`Maximum ${maxImages} images allowed`);
+  const handleFileSelect = async (files) => {
+    const fileArray = Array.from(files);
+    const remainingSlots = maxImages - images.length;
+    
+    if (fileArray.length > remainingSlots) {
+      toast.error(`You can only upload ${remainingSlots} more image(s)`);
       return;
     }
 
     setUploading(true);
     const newImages = [];
 
-    try {
-      for (const file of files) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          alert(`${file.name} is not an image file`);
-          continue;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert(`${file.name} is too large. Maximum size is 5MB`);
-          continue;
-        }
-
-        const base64 = await fileToBase64(file);
-        newImages.push(base64);
+    for (const file of fileArray) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file`);
+        continue;
       }
 
-      onChange([...images, ...newImages]);
-    } catch (error) {
-      console.error('Error processing images:', error);
-      alert('Error processing images');
-    } finally {
-      setUploading(false);
+      // Check file size (convert MB to bytes)
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+      if (file.size > maxSizeBytes) {
+        toast.error(`${file.name} is larger than ${maxSizeMB}MB`);
+        continue;
+      }
+
+      try {
+        // Create preview URL
+        const imageUrl = URL.createObjectURL(file);
+        
+        // You can upload to your server here and get the actual URL
+        // For now, we'll use the object URL
+        newImages.push(imageUrl);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        toast.error(`Failed to process ${file.name}`);
+      }
     }
-  }, [images, maxImages, onChange]);
 
-  // Handle drag and drop
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    handleFileSelect(files);
-  }, [handleFileSelect]);
+    if (newImages.length > 0) {
+      onChange([...images, ...newImages]);
+      toast.success(`${newImages.length} image(s) uploaded successfully`);
+    }
 
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    setDragOver(false);
-  }, []);
-
-  // Handle file input change
-  const handleInputChange = (e) => {
-    const files = Array.from(e.target.files);
-    handleFileSelect(files);
-    e.target.value = ''; // Reset input
+    setUploading(false);
   };
 
-  // Remove image
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = e.dataTransfer.files;
+    handleFileSelect(files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
   const removeImage = (index) => {
     const newImages = images.filter((_, i) => i !== index);
+    onChange(newImages);
+    toast.success('Image removed');
+  };
+
+  const moveImage = (fromIndex, toIndex) => {
+    const newImages = [...images];
+    const [movedImage] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, movedImage);
     onChange(newImages);
   };
 
@@ -88,90 +93,131 @@ const ImageUpload = ({ images = [], onChange, maxImages = 5 }) => {
     <div className="space-y-4">
       {/* Upload Area */}
       <div
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+          dragOver 
+            ? 'border-sky-500 bg-sky-50' 
+            : 'border-gray-300 hover:border-gray-400'
+        } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragOver
-            ? 'border-sky-500 bg-sky-50'
-            : 'border-gray-300 hover:border-gray-400'
-        } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+        onClick={() => fileInputRef.current?.click()}
       >
         <input
+          ref={fileInputRef}
           type="file"
           multiple
           accept="image/*"
-          onChange={handleInputChange}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={uploading || images.length >= maxImages}
+          onChange={(e) => handleFileSelect(e.target.files)}
+          className="hidden"
         />
         
         <div className="space-y-2">
-          <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-            {uploading ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-600"></div>
-            ) : (
-              <Upload className="h-6 w-6 text-gray-400" />
-            )}
-          </div>
-          
+          <Upload className="mx-auto h-12 w-12 text-gray-400" />
           <div>
             <p className="text-sm font-medium text-gray-900">
-              {uploading ? 'Processing images...' : 'Drop images here or click to upload'}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              PNG, JPG, GIF up to 5MB each. Maximum {maxImages} images.
+              Click to upload or drag and drop
             </p>
             <p className="text-xs text-gray-500">
-              {images.length}/{maxImages} images uploaded
+              PNG, JPG, GIF up to {maxSizeMB}MB each (max {maxImages} images)
             </p>
           </div>
         </div>
       </div>
 
-      {/* Image Previews */}
+      {/* Upload Progress */}
+      {uploading && (
+        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sky-600"></div>
+          <span>Uploading images...</span>
+        </div>
+      )}
+
+      {/* Images Grid */}
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((image, index) => (
-            <div key={index} className="relative group">
-              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={image}
-                  alt={`Upload ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA5VjEzTTEyIDE3SDE2TTE2IDlIMTJNMTYgMTNIMTIiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
-                  }}
-                />
-              </div>
+            <div
+              key={index}
+              className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden border"
+            >
+              <img
+                src={image}
+                alt={`Upload ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDlWN0MxIDcgMSA5IDEgOUwxIDE3QzEgMTkgMyAxOSAzIDE5SDE5QzIxIDE5IDIxIDE3IDIxIDE3VjlaTTMgOUwzIDdDMyA3IDMgOSAzIDlaTTkgMTNMMTIgMTBMMTUgMTNNMTIgMTBWMTciIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K';
+                }}
+              />
               
-              {/* Remove Button */}
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              >
-                <X size={14} />
-              </button>
+              {/* Image Controls */}
+              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                {/* Remove Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                  }}
+                  className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                  title="Remove image"
+                >
+                  <X size={16} />
+                </button>
+
+                {/* Move Left */}
+                {index > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveImage(index, index - 1);
+                    }}
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full transition-colors"
+                    title="Move left"
+                  >
+                    ←
+                  </button>
+                )}
+
+                {/* Move Right */}
+                {index < images.length - 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveImage(index, index + 1);
+                    }}
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full transition-colors"
+                    title="Move right"
+                  >
+                    →
+                  </button>
+                )}
+              </div>
+
+              {/* Primary Badge */}
+              {index === 0 && (
+                <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                  Primary
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Add More Button */}
-      {images.length > 0 && images.length < maxImages && (
-        <button
-          type="button"
-          onClick={() => document.querySelector('input[type="file"]').click()}
-          disabled={uploading}
-          className="w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium text-gray-700 disabled:opacity-50"
-        >
-          <ImageIcon size={16} />
-          Add More Images ({images.length}/{maxImages})
-        </button>
-      )}
+      {/* Upload Info */}
+      <div className="flex items-start space-x-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+        <AlertCircle size={16} className="mt-0.5 text-blue-500 flex-shrink-0" />
+        <div>
+          <p className="font-medium">Upload Guidelines:</p>
+          <ul className="mt-1 space-y-1">
+            <li>• Maximum {maxImages} images per product</li>
+            <li>• Maximum {maxSizeMB}MB per image</li>
+            <li>• Supported formats: JPG, PNG, GIF</li>
+            <li>• First image will be used as the primary product image</li>
+            <li>• You can reorder images by using the arrow buttons</li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default ImageUpload;
+}
