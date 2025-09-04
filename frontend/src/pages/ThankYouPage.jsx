@@ -50,12 +50,15 @@ const ThankYouPage = () => {
   }, []);
 
   const formatPrice = (price) => {
+    // Handle undefined, null, or invalid prices
+    const numericPrice = parseFloat(price) || 0;
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'JOD',
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2, 
-    }).format(price);
+    }).format(numericPrice);
   };
 
   const formatDate = (date) => {
@@ -82,6 +85,15 @@ const ThankYouPage = () => {
     }
   };
 
+  // Calculate subtotal from items if not provided
+  const calculateSubtotal = (items) => {
+    if (!items || !Array.isArray(items)) return 0;
+    return items.reduce((total, item) => {
+      const itemSubtotal = parseFloat(item.subtotal) || (parseFloat(item.unit_price) * parseInt(item.quantity)) || 0;
+      return total + itemSubtotal;
+    }, 0);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -103,11 +115,17 @@ const ThankYouPage = () => {
     );
   }
 
-  
-
-  
-
   const deliveryInfo = getDeliveryInfo(orderData.city);
+  
+  // Calculate the correct subtotal
+  const subtotalAmount = orderData.subtotal_price 
+    ? parseFloat(orderData.subtotal_price) 
+    : calculateSubtotal(orderData.items);
+
+  // Debug logging
+  console.log('Order Data:', orderData);
+  console.log('Calculated Subtotal:', subtotalAmount);
+  console.log('Total Price:', orderData.total_price);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -118,7 +136,9 @@ const ThankYouPage = () => {
             <CheckCircle className="h-12 w-12 text-green-500" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
-          <p className="text-gray-600 mt-2">Order #{orderData.order_id?.slice(0, 8).toUpperCase()}</p>
+          <p className="text-gray-600 mt-2">
+            Order #{(orderData.order_id || orderData.id || 'N/A').toString().slice(0, 8).toUpperCase()}
+          </p>
         </div>
 
         {/* Receipt Card */}
@@ -135,7 +155,7 @@ const ThankYouPage = () => {
             <div className="pb-4 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-500 mb-2">CUSTOMER DETAILS</h3>
               <div className="space-y-1 text-sm">
-                <p><span className="text-gray-600">Name:</span> <strong>{orderData.customer_name}</strong></p>
+                <p><span className="text-gray-600">Name:</span> <strong>{orderData.customer_name || orderData.name}</strong></p>
                 <p><span className="text-gray-600">Phone:</span> <strong>{orderData.phone}</strong></p>
                 <p><span className="text-gray-600">Address:</span> <strong>{orderData.address}</strong></p>
                 <p><span className="text-gray-600">City:</span> <strong>{orderData.city}</strong></p>
@@ -149,7 +169,7 @@ const ThankYouPage = () => {
             <div className="pb-4 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-500 mb-3">ORDER ITEMS</h3>
               <div className="space-y-3">
-                {orderData.items.map((item, index) => (
+                {orderData.items && orderData.items.map((item, index) => (
                   <div key={index} className="flex justify-between items-start text-sm">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{item.product_name}</p>
@@ -158,7 +178,9 @@ const ThankYouPage = () => {
                       </p>
                     </div>
                     <div className="text-right ml-4">
-                      <p className="font-medium">{formatPrice(item.subtotal)}</p>
+                      <p className="font-medium">
+                        {formatPrice(item.subtotal || (parseFloat(item.unit_price) * parseInt(item.quantity)))}
+                      </p>
                       <p className="text-gray-500 text-xs">{formatPrice(item.unit_price)} each</p>
                     </div>
                   </div>
@@ -170,7 +192,7 @@ const ThankYouPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Subtotal</span>
-                <span>{formatPrice(orderData.subtotal_price)}</span>
+                <span>{formatPrice(subtotalAmount)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Delivery to {orderData.city}</span>
@@ -198,7 +220,6 @@ const ThankYouPage = () => {
                   <div className="text-xs text-gray-600 space-y-1">
                     <p><strong>Delivery:</strong> 1-3 business days</p>
                     <p><strong>Fee:</strong> {formatPrice(deliveryInfo.fee)} for {orderData.city}</p>
-                    
                   </div>
                 </div>
               </div>
@@ -230,8 +251,6 @@ const ThankYouPage = () => {
             <Home className="mr-2 h-5 w-5" />
             Continue Shopping
           </button>
-          
-          
         </div>
       </div>
     </div>
