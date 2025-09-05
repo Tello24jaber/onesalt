@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 1000000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,9 +28,10 @@ api.interceptors.response.use(
   (response) => response.data, // <-- crucial: callers receive JSON body, not Axios response
   (error) => {
     console.error('API Error:', error?.message);
+    console.log('Current API Base URL:', API_BASE_URL); // Debug log
 
     if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
-      const message = 'Cannot connect to server. Please ensure the backend is running on port 5000.';
+      const message = `Cannot connect to server at ${API_BASE_URL}. Please check your network connection.`;
       toast.error(message);
       return Promise.reject(new Error(message));
     }
@@ -102,9 +103,12 @@ export const adminAPI = {
   updateOrderStatus: (id, status) => api.patch(`/api/orders/${id}/status`, { status }),
 };
 
-// Log the API URL in development
-if (import.meta.env.DEV) {
-  console.log('API Base URL:', API_BASE_URL);
-}
+// Log the API URL in development AND production for debugging
+console.log('API Base URL:', API_BASE_URL);
+console.log('Environment variables:', {
+  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  NODE_ENV: import.meta.env.NODE_ENV,
+  MODE: import.meta.env.MODE
+});
 
 export default api;
