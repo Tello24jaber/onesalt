@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 
 // Base API URL - For Vite, use import.meta.env instead of process.env
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -59,31 +60,46 @@ api.interceptors.response.use(
   }
 );
 
-// Products API – now returns payloads directly (arrays/objects), thanks to the interceptor
+// Products API – FIXED: Added /api prefix to all routes
 export const productsAPI = {
-  getAll: () => api.get('/products'),
-  getById: (id) => api.get(`/products/${id}`),
-  getBySlug: (slug) => api.get(`/products/slug/${slug}`),
-  create: (data) => api.post('/products', data),
-  update: (id, data) => api.put(`/products/${id}`, data),
-  delete: (id) => api.delete(`/products/${id}`),
+  getAll: () => api.get('/api/products'),
+  getById: (id) => api.get(`/api/products/${id}`),
+  getBySlug: (slug) => api.get(`/api/products/slug/${slug}`),
+  create: (data) => api.post('/api/products', data),
+  update: (id, data) => api.put(`/api/products/${id}`, data),
+  delete: (id) => api.delete(`/api/products/${id}`),
 };
 
-// Orders API
+// Orders API – FIXED: Added /api prefix
 export const ordersAPI = {
-  create: (data) => api.post('/orders', data),
-  getAll: (params) => api.get('/orders', { params }),
-  getById: (id) => api.get(`/orders/${id}`),
-  updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  create: (data) => api.post('/api/orders', data),
+  getAll: (params) => api.get('/api/orders', { params }),
+  getById: (id) => api.get(`/api/orders/${id}`),
+  updateStatus: (id, status) => api.patch(`/api/orders/${id}/status`, { status }),
 };
 
-// Categories API (if present on backend)
+// Categories API – FIXED: Added /api prefix  
 export const categoriesAPI = {
-  getAll: () => api.get('/categories'),
-  getById: (id) => api.get(`/categories/${id}`),
-  create: (data) => api.post('/categories', data),
-  update: (id, data) => api.put(`/categories/${id}`, data),
-  delete: (id) => api.delete(`/categories/${id}`),
+  getAll: () => api.get('/api/categories'),
+  getById: (id) => api.get(`/api/categories/${id}`),
+  create: (data) => api.post('/api/categories', data),
+  update: (id, data) => api.put(`/api/categories/${id}`, data),
+  delete: (id) => api.delete(`/api/categories/${id}`),
+};
+
+// Admin API for the admin dashboard
+export const adminAPI = {
+  // Products
+  getAllProducts: () => api.get('/api/products'),
+  getProduct: (id) => api.get(`/api/products/${id}`),
+  createProduct: (data) => api.post('/api/products', data),
+  updateProduct: (id, data) => api.put(`/api/products/${id}`, data),
+  deleteProduct: (id) => api.delete(`/api/products/${id}`),
+  
+  // Orders  
+  getAllOrders: (params) => api.get('/api/orders', { params }),
+  getOrder: (id) => api.get(`/api/orders/${id}`),
+  updateOrderStatus: (id, status) => api.patch(`/api/orders/${id}/status`, { status }),
 };
 
 // Log the API URL in development
