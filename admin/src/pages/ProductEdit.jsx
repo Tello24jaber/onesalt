@@ -27,6 +27,19 @@ export default function ProductEdit() {
     is_active: true
   });
 
+  // Helper function to filter out blob URLs and invalid images
+  const filterValidImages = (images) => {
+    if (!Array.isArray(images)) return [];
+    
+    return images.filter(url => {
+      // Filter out blob URLs and invalid URLs
+      return url && 
+             typeof url === 'string' && 
+             !url.startsWith('blob:') && 
+             (url.startsWith('http') || url.startsWith('https'));
+    });
+  };
+
   useEffect(() => {
     if (isEdit) {
       fetchProduct();
@@ -41,11 +54,21 @@ export default function ProductEdit() {
       
       // Handle Axios response structure
       if (response && response.data && typeof response.data === 'object') {
-        setFormData(response.data);
+        // Filter out blob URLs before setting form data
+        const productData = {
+          ...response.data,
+          images: filterValidImages(response.data.images)
+        };
+        setFormData(productData);
       }
       // Handle direct response (non-Axios) 
       else if (response && typeof response === 'object' && response.id) {
-        setFormData(response);
+        // Filter out blob URLs for direct response
+        const productData = {
+          ...response,
+          images: filterValidImages(response.images)
+        };
+        setFormData(productData);
       }
       else {
         console.warn('Unexpected product response structure:', response);
@@ -81,7 +104,8 @@ export default function ProductEdit() {
       const dataToSend = {
         ...formData,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock)
+        stock: parseInt(formData.stock),
+        images: filterValidImages(formData.images) // Filter images before saving too
       };
 
       if (isEdit) {
