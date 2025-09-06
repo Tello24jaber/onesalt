@@ -13,33 +13,36 @@ const ordersRoutes = require('./routes/orders');
 const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
 
-// CORS configuration - FIXED: Single, comprehensive setup
-// In your deployed server configuration
+// CORS MUST come FIRST - before any other middleware
 app.use(cors({
   origin: [
-    'http://localhost:3000',   // backup
-    'http://localhost:3001',   // shop website  
-    'http://localhost:5173',   // admin dashboard (local)
-    'https://adminonesalt.netlify.app', 
-    'https://wearonesalt.com'  
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'https://adminonesalt.netlify.app',
+    'https://wearonesalt.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 // Add this for older browsers
 }));
 
-// Other middleware
+// Handle preflight requests explicitly
+app.options('*', cors());
+
+// Other middleware AFTER CORS
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// API Routes
+// API Routes (these don't use admin auth)
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Admin routes
+// Admin routes (these DO use admin auth)
 app.use('/admin', adminRoutes);
 
 // Health check
@@ -48,7 +51,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     message: 'OneSalt API is running',
     timestamp: new Date().toISOString(),
-    cors: 'Configured for ports 3000, 3001, 5173'
+    cors: 'Configured for admin domain'
   });
 });
 
@@ -60,7 +63,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       products: '/api/products',
-      upload: '/api/upload/images'
+      upload: '/api/upload/images',
+      admin: '/admin'
     }
   });
 });
@@ -88,7 +92,8 @@ app.listen(PORT, () => {
   console.log(`🚀 OneSalt Backend Server is running on http://localhost:${PORT}`);
   console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
   console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🌐 CORS enabled for: 3000, 3001, 5173`);
+  console.log(`🔐 Admin endpoint: http://localhost:${PORT}/admin`);
+  console.log(`🌐 CORS enabled for adminonesalt.netlify.app`);
 });
 
 module.exports = app;
