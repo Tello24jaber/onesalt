@@ -14,8 +14,7 @@ export default function ImageUpload({
   const [previewImages, setPreviewImages] = useState([]); // Separate state for previews
   const fileInputRef = useRef(null);
 
-  // Get your backend URL from environment or use default for Vite
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Clean up data URLs when component unmounts
   useEffect(() => {
