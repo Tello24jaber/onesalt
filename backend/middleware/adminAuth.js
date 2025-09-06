@@ -1,4 +1,9 @@
 const adminAuth = (req, res, next) => {
+  // Skip auth for CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -14,11 +14,14 @@ const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
 
 // CORS configuration - FIXED: Single, comprehensive setup
+// In your deployed server configuration
 app.use(cors({
   origin: [
     'http://localhost:3000',   // backup
-    'http://localhost:3001',   // shop website
-    'http://localhost:5173'    // admin dashboard
+    'http://localhost:3001',   // shop website  
+    'http://localhost:5173',   // admin dashboard (local)
+    'https://adminonesalt.netlify.app', 
+    'https://wearonesalt.com'  
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
