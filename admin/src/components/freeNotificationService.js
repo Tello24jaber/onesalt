@@ -43,10 +43,10 @@ class FreeNotificationService {
       // Save back
       await fs.writeFile(notificationsFile, JSON.stringify(notifications, null, 2));
       
-      console.log('Order notification stored for admin dashboard');
+      // console.log('Order notification stored for admin dashboard');
       return true;
     } catch (error) {
-      console.error('Error storing notification:', error);
+      // console.error('Error storing notification:', error);
       return false;
     }
   }
@@ -99,17 +99,17 @@ class FreeNotificationService {
     // Generate WhatsApp link
     results.whatsapp_link = this.generateWhatsAppLink(orderData);
     
-    console.log('===========================================');
-    console.log('🛍️ NEW ORDER RECEIVED!');
-    console.log('===========================================');
-    console.log(`Customer: ${orderData.customer_name}`);
-    console.log(`Phone: ${orderData.phone}`);
-    console.log(`City: ${orderData.city}`);
-    console.log(`Total: $${orderData.total_price}`);
-    console.log('-------------------------------------------');
-    console.log('WhatsApp Admin (Click to open):');
-    console.log(results.whatsapp_link);
-    console.log('===========================================');
+    // console.log('===========================================');
+    // console.log('🛍️ NEW ORDER RECEIVED!');
+    // console.log('===========================================');
+    // console.log(`Customer: ${orderData.customer_name}`);
+    // console.log(`Phone: ${orderData.phone}`);
+    // console.log(`City: ${orderData.city}`);
+    // console.log(`Total: $${orderData.total_price}`);
+    // console.log('-------------------------------------------');
+    // console.log('WhatsApp Admin (Click to open):');
+    // console.log(results.whatsapp_link);
+    // console.log('===========================================');
     
     return results;
   }

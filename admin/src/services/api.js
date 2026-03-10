@@ -22,18 +22,18 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      localStorage.removeItem('adminToken');
+    // if (error.response?.status === 401) {
+    //   // Clear token and redirect to login
+    //   localStorage.removeItem('adminToken');
       
-      // Check if we're already on login page to avoid infinite redirects
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-        toast.error('Session expired. Please login again.');
-      }
-    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-      toast.error('Network error. Please check your connection.');
-    }
+    //   // Check if we're already on login page to avoid infinite redirects
+    //   if (window.location.pathname !== '/login') {
+    //     window.location.href = '/login';
+    //     toast.error('Session expired. Please login again.');
+    //   }
+    // } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+    //   toast.error('Network error. Please check your connection.');
+    // }
     return Promise.reject(error);
   }
 );

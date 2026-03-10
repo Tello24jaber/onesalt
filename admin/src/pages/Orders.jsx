@@ -28,21 +28,25 @@ export default function Orders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const params = {
-        page,
-        limit: 20,
-        ...(search && { search }),
-        ...(status && { status }),
-        ...(city && { city }),
-        ...(dateFrom && { from: dateFrom }),
-        ...(dateTo && { to: dateTo })
-      };
+      // const params = {
+      //   page,
+      //   limit: 20,
+      //   ...(search && { search }),
+      //   ...(status && { status }),
+      //   ...(city && { city }),
+      //   ...(dateFrom && { from: dateFrom }),
+      //   ...(dateTo && { to: dateTo })
+      // };
       
-      const response = await adminAPI.getOrders(params);
-      setOrders(response.data.orders);
-      setTotalPages(response.data.totalPages);
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.getOrders(params);
+      // setOrders(response.data.orders);
+      // setTotalPages(response.data.totalPages);
+      
+      setOrders([]);
+      setTotalPages(1);
     } catch (error) {
-      toast.error('Failed to load orders');
+      // toast.error('Failed to load orders');
     } finally {
       setLoading(false);
     }
@@ -50,26 +54,29 @@ export default function Orders() {
 
   const handleExport = async () => {
     try {
-      const params = {
-        ...(status && { status }),
-        ...(dateFrom && { from: dateFrom }),
-        ...(dateTo && { to: dateTo })
-      };
+      // const params = {
+      //   ...(status && { status }),
+      //   ...(dateFrom && { from: dateFrom }),
+      //   ...(dateTo && { to: dateTo })
+      // };
       
-      const response = await adminAPI.exportOrdersCSV(params);
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.exportOrdersCSV(params);
       
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `orders-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      // // Create download link
+      // const url = window.URL.createObjectURL(new Blob([response.data]));
+      // const link = document.createElement('a');
+      // link.href = url;
+      // link.setAttribute('download', `orders-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      // document.body.appendChild(link);
+      // link.click();
+      // link.remove();
       
-      toast.success('Orders exported successfully');
+      // toast.success('Orders exported successfully');
+      
+      alert('Export is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      toast.error('Failed to export orders');
+      // toast.error('Failed to export orders');
     }
   };
 

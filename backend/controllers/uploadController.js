@@ -94,14 +94,14 @@ const uploadImage = async (req, res) => {
 // Upload multiple images
 const uploadMultipleImages = async (req, res) => {
   try {
-    console.log('=== UPLOAD REQUEST RECEIVED ===');
-    console.log('Request method:', req.method);
-    console.log('Request path:', req.path);
-    console.log('Files received:', req.files ? req.files.length : 'No files');
-    console.log('Request headers:', req.headers);
+    // console.log('=== UPLOAD REQUEST RECEIVED ===');
+    // console.log('Request method:', req.method);
+    // console.log('Request path:', req.path);
+    // console.log('Files received:', req.files ? req.files.length : 'No files');
+    // console.log('Request headers:', req.headers);
 
     if (!req.files || req.files.length === 0) {
-      console.log('ERROR: No files in request');
+      // console.log('ERROR: No files in request');
       return res.status(400).json({
         success: false,
         message: 'No image files provided'

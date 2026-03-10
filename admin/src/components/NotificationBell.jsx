@@ -39,7 +39,7 @@ export default function NotificationBell() {
         playNotificationSound();
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // console.error('Error fetching notifications:', error);
     }
   };
 
@@ -66,7 +66,7 @@ export default function NotificationBell() {
     try {
       audio.play();
     } catch (error) {
-      console.log('Could not play notification sound');
+      // console.log('Could not play notification sound');
     }
   };
 
@@ -77,7 +77,7 @@ export default function NotificationBell() {
       });
       fetchNotifications();
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      // console.error('Error marking notification as read:', error);
     }
   };
 

@@ -52,10 +52,21 @@ export default function Dashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await adminAPI.getDashboardStats();
-      setStats(response.data);
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.getDashboardStats();
+      // setStats(response.data);
+      
+      // Set empty stats for portfolio mode
+      setStats({
+        ordersToday: 0,
+        revenueToday: 0,
+        orders7Days: 0,
+        revenue7Days: 0,
+        statusCounts: {},
+        recentOrders: []
+      });
     } catch (error) {
-      toast.error('Failed to load dashboard stats');
+      // toast.error('Failed to load dashboard stats');
     } finally {
       setLoading(false);
     }

@@ -320,12 +320,12 @@ const adminController = {
       if (error) throw error;
 
       // Log status change for revenue tracking (optional - could be used for analytics)
-      console.log(`Order ${req.params.id} status changed from ${currentOrder.status} to ${status}`);
-      if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
-        console.log(`Revenue impact: -${currentOrder.total_price} JD`);
-      } else if (currentOrder.status === 'cancelled' && status !== 'cancelled') {
-        console.log(`Revenue impact: +${currentOrder.total_price} JD`);
-      }
+      // console.log(`Order ${req.params.id} status changed from ${currentOrder.status} to ${status}`);
+      // if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
+      //   console.log(`Revenue impact: -${currentOrder.total_price} JD`);
+      // } else if (currentOrder.status === 'cancelled' && status !== 'cancelled') {
+      //   console.log(`Revenue impact: +${currentOrder.total_price} JD`);
+      // }
 
       res.json(data);
     } catch (error) {

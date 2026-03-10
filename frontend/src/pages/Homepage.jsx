@@ -220,46 +220,49 @@ const HomePage = () => {
   useEffect(() => {const fetchFeaturedProducts = async () => {
   try {
     setLoading(true);
-    const response = await productsAPI.getAll();
-    console.log('Featured Products API Response:', response); // Debug log
+    // API call commented out for portfolio - backend is not running
+    // const response = await productsAPI.getAll();
+    // console.log('Featured Products API Response:', response); // Debug log
     
     let products = [];
     
-    // Handle Axios response structure
-    if (response && response.data && typeof response.data === 'object') {
-      // If response.data has products array
-      if (Array.isArray(response.data.products)) {
-        products = response.data.products;
-      }
-      // If response.data itself is an array  
-      else if (Array.isArray(response.data)) {
-        products = response.data;
-      }
-      // Fallback for unexpected structure
-      else {
-        console.warn('Unexpected featured products response structure:', response);
-        products = [];
-      }
-    }
-    // Handle direct response (non-Axios)
-    else if (response && Array.isArray(response)) {
-      products = response;
-    }
-    // Complete fallback
-    else {
-      console.warn('Invalid featured products response:', response);
-      products = [];
-    }
+    // // Handle Axios response structure
+    // if (response && response.data && typeof response.data === 'object') {
+    //   // If response.data has products array
+    //   if (Array.isArray(response.data.products)) {
+    //     products = response.data.products;
+    //   }
+    //   // If response.data itself is an array  
+    //   else if (Array.isArray(response.data)) {
+    //     products = response.data;
+    //   }
+    //   // Fallback for unexpected structure
+    //   else {
+    //     console.warn('Unexpected featured products response structure:', response);
+    //     products = [];
+    //   }
+    // }
+    // // Handle direct response (non-Axios)
+    // else if (response && Array.isArray(response)) {
+    //   products = response;
+    // }
+    // // Complete fallback
+    // else {
+    //   console.warn('Invalid featured products response:', response);
+    //   products = [];
+    // }
     
-    // Filter only featured products and take first 3
-    const featured = products.filter(product => product.is_featured).slice(0, 3);
+    // // Filter only featured products and take first 3
+    // const featured = products.filter(product => product.is_featured).slice(0, 3);
     
-    // If no featured products, take first 3 products
-    setFeaturedProducts(featured.length > 0 ? featured : products.slice(0, 3));
+    // // If no featured products, take first 3 products
+    // setFeaturedProducts(featured.length > 0 ? featured : products.slice(0, 3));
+    
+    setFeaturedProducts([]); // Empty array when backend is not running
     
   } catch (error) {
-    console.error('Error fetching featured products:', error);
-    toast.error('Failed to load featured products');
+    // console.error('Error fetching featured products:', error);
+    // toast.error('Failed to load featured products');
     setFeaturedProducts([]); // Ensure it's always an array
   } finally {
     setLoading(false);

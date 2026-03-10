@@ -49,35 +49,39 @@ export default function ProductEdit() {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getProduct(id);
-      console.log('Product API Response:', response); // Debug log
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.getProduct(id);
+      // console.log('Product API Response:', response); // Debug log
       
-      // Handle Axios response structure
-      if (response && response.data && typeof response.data === 'object') {
-        // Filter out blob URLs before setting form data
-        const productData = {
-          ...response.data,
-          images: filterValidImages(response.data.images)
-        };
-        setFormData(productData);
-      }
-      // Handle direct response (non-Axios) 
-      else if (response && typeof response === 'object' && response.id) {
-        // Filter out blob URLs for direct response
-        const productData = {
-          ...response,
-          images: filterValidImages(response.images)
-        };
-        setFormData(productData);
-      }
-      else {
-        console.warn('Unexpected product response structure:', response);
-        toast.error('Failed to load product data');
-        navigate('/products');
-      }
+      // // Handle Axios response structure
+      // if (response && response.data && typeof response.data === 'object') {
+      //   // Filter out blob URLs before setting form data
+      //   const productData = {
+      //     ...response.data,
+      //     images: filterValidImages(response.data.images)
+      //   };
+      //   setFormData(productData);
+      // }
+      // // Handle direct response (non-Axios) 
+      // else if (response && typeof response === 'object' && response.id) {
+      //   // Filter out blob URLs for direct response
+      //   const productData = {
+      //     ...response,
+      //     images: filterValidImages(response.images)
+      //   };
+      //   setFormData(productData);
+      // }
+      // else {
+      //   console.warn('Unexpected product response structure:', response);
+      //   toast.error('Failed to load product data');
+      //   navigate('/products');
+      // }
+      
+      // Redirect to products page in portfolio mode
+      navigate('/products');
     } catch (error) {
-      console.error('Fetch product error:', error);
-      toast.error('Failed to load product');
+      // console.error('Fetch product error:', error);
+      // toast.error('Failed to load product');
       navigate('/products');
     } finally {
       setLoading(false);
@@ -108,18 +112,22 @@ export default function ProductEdit() {
         images: filterValidImages(formData.images) // Filter images before saving too
       };
 
-      if (isEdit) {
-        await adminAPI.updateProduct(id, dataToSend);
-        toast.success('Product updated successfully');
-      } else {
-        await adminAPI.createProduct(dataToSend);
-        toast.success('Product created successfully');
-      }
+      // API calls commented out for portfolio - backend is not running
+      // if (isEdit) {
+      //   await adminAPI.updateProduct(id, dataToSend);
+      //   toast.success('Product updated successfully');
+      // } else {
+      //   await adminAPI.createProduct(dataToSend);
+      //   toast.success('Product created successfully');
+      // }
       
+      // navigate('/products');
+      
+      alert('Product save is disabled in portfolio mode (backend not running)');
       navigate('/products');
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error(isEdit ? 'Failed to update product' : 'Failed to create product');
+      // console.error('Save error:', error);
+      // toast.error(isEdit ? 'Failed to update product' : 'Failed to create product');
     } finally {
       setSaving(false);
     }

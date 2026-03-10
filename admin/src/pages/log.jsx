@@ -20,30 +20,33 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      await adminAPI.verifyToken(token);
-      localStorage.setItem('adminToken', token);
-      toast.success('Login successful');
+      // API call commented out for portfolio - backend is not running
+      // await adminAPI.verifyToken(token);
+      // localStorage.setItem('adminToken', token);
+      // toast.success('Login successful');
       
-      // Call the onLogin callback to update parent state
-      if (onLogin) {
-        onLogin();
-      }
+      // // Call the onLogin callback to update parent state
+      // if (onLogin) {
+      //   onLogin();
+      // }
       
-      navigate('/');
+      // navigate('/');
+      
+      alert('Admin login is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      console.error('Login error:', error);
+      // console.error('Login error:', error);
       
-      // Handle different error types
-      if (error.response?.status === 401) {
-        toast.error('Invalid admin token');
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        toast.error('Unable to connect to server. Please check your connection.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      // // Handle different error types
+      // if (error.response?.status === 401) {
+      //   toast.error('Invalid admin token');
+      // } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+      //   toast.error('Unable to connect to server. Please check your connection.');
+      // } else {
+      //   toast.error('Login failed. Please try again.');
+      // }
       
-      // Clear any stored token on failed login
-      localStorage.removeItem('adminToken');
+      // // Clear any stored token on failed login
+      // localStorage.removeItem('adminToken');
     } finally {
       setLoading(false);
     }

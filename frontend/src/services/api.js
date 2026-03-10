@@ -27,35 +27,35 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data, // <-- crucial: callers receive JSON body, not Axios response
   (error) => {
-    console.error('API Error:', error?.message);
-    console.log('Current API Base URL:', API_BASE_URL); // Debug log
+    // console.error('API Error:', error?.message);
+    // console.log('Current API Base URL:', API_BASE_URL); // Debug log
 
-    if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
-      const message = `Cannot connect to server at ${API_BASE_URL}. Please check your network connection.`;
-      toast.error(message);
-      return Promise.reject(new Error(message));
-    }
+    // if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+    //   const message = `Cannot connect to server at ${API_BASE_URL}. Please check your network connection.`;
+    //   toast.error(message);
+    //   return Promise.reject(new Error(message));
+    // }
 
-    if (error.response) {
-      const message = error.response.data?.message || 'Something went wrong';
-      console.error('Server Error:', message);
-      switch (error.response.status) {
-        case 400:
-          toast.error(`Bad Request: ${message}`); break;
-        case 401:
-          toast.error('Unauthorized. Please login again.'); break;
-        case 404:
-          toast.error('Resource not found'); break;
-        case 500:
-          toast.error('Server error. Please try again later.'); break;
-        default:
-          toast.error(message);
-      }
-    } else if (error.request) {
-      toast.error('No response from server. Please check your connection.');
-    } else {
-      toast.error('An unexpected error occurred');
-    }
+    // if (error.response) {
+    //   const message = error.response.data?.message || 'Something went wrong';
+    //   console.error('Server Error:', message);
+    //   switch (error.response.status) {
+    //     case 400:
+    //       toast.error(`Bad Request: ${message}`); break;
+    //     case 401:
+    //       toast.error('Unauthorized. Please login again.'); break;
+    //     case 404:
+    //       toast.error('Resource not found'); break;
+    //     case 500:
+    //       toast.error('Server error. Please try again later.'); break;
+    //     default:
+    //       toast.error(message);
+    //   }
+    // } else if (error.request) {
+    //   toast.error('No response from server. Please check your connection.');
+    // } else {
+    //   toast.error('An unexpected error occurred');
+    // }
 
     return Promise.reject(error);
   }
@@ -104,11 +104,11 @@ export const adminAPI = {
 };
 
 // Log the API URL in development AND production for debugging
-console.log('API Base URL:', API_BASE_URL);
-console.log('Environment variables:', {
-  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  NODE_ENV: import.meta.env.NODE_ENV,
-  MODE: import.meta.env.MODE
-});
+// console.log('API Base URL:', API_BASE_URL);
+// console.log('Environment variables:', {
+//   VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+//   NODE_ENV: import.meta.env.NODE_ENV,
+//   MODE: import.meta.env.MODE
+// });
 
 export default api;

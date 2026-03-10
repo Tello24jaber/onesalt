@@ -428,9 +428,9 @@ const updateOrderStatus = async (req, res) => {
     // Log revenue impact for cancelled orders
     if (currentOrder) {
       if (currentOrder.status !== 'cancelled' && status === 'cancelled') {
-        console.log(`Order ${id} cancelled - Revenue impact: -${currentOrder.total_price} JD`);
+        // console.log(`Order ${id} cancelled - Revenue impact: -${currentOrder.total_price} JD`);
       } else if (currentOrder.status === 'cancelled' && status !== 'cancelled') {
-        console.log(`Order ${id} reactivated - Revenue impact: +${currentOrder.total_price} JD`);
+        // console.log(`Order ${id} reactivated - Revenue impact: +${currentOrder.total_price} JD`);
       }
     }
 

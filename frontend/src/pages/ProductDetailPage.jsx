@@ -43,16 +43,20 @@ const ProductDetailPage = () => {
         setLoading(true);
         // Scroll to top when loading starts
         window.scrollTo(0, 0);
-        const response = await productsAPI.getBySlug(slug);
-        const productData = response.data;
+        // API call commented out for portfolio - backend is not running
+        // const response = await productsAPI.getBySlug(slug);
+        // const productData = response.data;
         
-        setProduct(productData);
+        // setProduct(productData);
         
         // NO default selections - user must choose
         
+        // For portfolio mode, redirect to products page
+        navigate('/products');
+        
       } catch (error) {
-        console.error('Error fetching product:', error);
-        toast.error('Product not found');
+        // console.error('Error fetching product:', error);
+        // toast.error('Product not found');
         navigate('/products');
       } finally {
         setLoading(false);
@@ -89,8 +93,8 @@ const ProductDetailPage = () => {
       addToCart(product, { color: selectedColor, size: selectedSize }, quantity);
       setQuantity(1); // Reset quantity after adding
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Failed to add to cart');
+      // console.error('Error adding to cart:', error);
+      // toast.error('Failed to add to cart');
     } finally {
       // Reset loading state after a delay
       setTimeout(() => {

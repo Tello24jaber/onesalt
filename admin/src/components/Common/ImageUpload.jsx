@@ -33,14 +33,14 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
     });
 
     try {
-      console.log('Uploading to:', `${BACKEND_URL}/api/upload/images`);
+      // console.log('Uploading to:', `${BACKEND_URL}/api/upload/images`);
       
       const response = await fetch(`${BACKEND_URL}/api/upload/images`, {
         method: 'POST',
         body: formData,
       });
 
-      console.log('Upload response status:', response.status);
+      // console.log('Upload response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -48,10 +48,10 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
       }
 
       const data = await response.json();
-      console.log('Upload success:', data);
+      // console.log('Upload success:', data);
       return data.data; // Array of uploaded image objects with URLs
     } catch (error) {
-      console.error('Backend upload error:', error);
+      // console.error('Backend upload error:', error);
       throw error;
     }
   };
@@ -104,7 +104,7 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
           id: Date.now() + Math.random() // Temporary ID
         });
       } catch (error) {
-        console.error('Error creating preview for', file.name, error);
+        // console.error('Error creating preview for', file.name, error);
       }
     }
 
@@ -136,7 +136,7 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
       
       toast.success(`${uploadedImages.length} image(s) uploaded successfully`);
     } catch (error) {
-      console.error('Upload error:', error);
+      // console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload images');
       
       // Remove failed previews
@@ -257,7 +257,7 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
                 alt={`Image ${displayIndex + 1}`}
                 className={`w-full h-full object-cover ${imageData.isUploading ? 'opacity-75' : ''}`}
                 onError={(e) => {
-                  console.error('Image failed to load:', imageData.url);
+                  // console.error('Image failed to load:', imageData.url);
                   // Fallback to a placeholder
                   e.target.style.display = 'none';
                   e.target.parentElement.innerHTML = `

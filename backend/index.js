@@ -79,7 +79,7 @@ app.use((req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  // console.error('Error:', err);
   res.status(err.status || 500).json({ 
     success: false,
     message: err.message || 'Internal server error',
@@ -89,11 +89,11 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 OneSalt Backend Server is running on http://localhost:${PORT}`);
-  console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
-  console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔐 Admin endpoint: http://localhost:${PORT}/admin`);
-  console.log(`🌐 CORS enabled for adminonesalt.netlify.app`);
+  // console.log(`🚀 OneSalt Backend Server is running on http://localhost:${PORT}`);
+  // console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
+  // console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+  // console.log(`🔐 Admin endpoint: http://localhost:${PORT}/admin`);
+  // console.log(`🌐 CORS enabled for adminonesalt.netlify.app`);
 });
 
 module.exports = app;

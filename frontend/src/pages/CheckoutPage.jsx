@@ -175,7 +175,7 @@ const CheckoutPage = () => {
         setLocationLoading(false);
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        // console.error('Geolocation error:', error);
         alert('Unable to get location. Please enable location services.');
         setLocationLoading(false);
       },
@@ -353,8 +353,8 @@ const CheckoutPage = () => {
       };
 
       // Validate data before sending
-      console.log('=== ORDER DATA VALIDATION ===');
-      console.log('Order Data:', JSON.stringify(orderData, null, 2));
+      // console.log('=== ORDER DATA VALIDATION ===');
+      // console.log('Order Data:', JSON.stringify(orderData, null, 2));
       
       // Check required fields
       const requiredFields = ['name', 'phone', 'address', 'city'];
@@ -379,12 +379,12 @@ const CheckoutPage = () => {
       
       // Check each item
       for (let item of orderData.items) {
-        console.log('Validating item:', item);
+        // console.log('Validating item:', item);
         
         // Check UUID format for product_id
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(item.product_id)) {
-          console.error('Invalid UUID for product_id:', item.product_id);
+          // console.error('Invalid UUID for product_id:', item.product_id);
           alert(`Invalid product ID format for ${item.product_name}`);
           return;
         }
@@ -405,38 +405,43 @@ const CheckoutPage = () => {
         }
       }
 
-      console.log('=== SENDING API REQUEST ===');
+      // console.log('=== SENDING API REQUEST ===');
 
-      // ACTUAL API call to create order
-      const response = await ordersAPI.create(orderData);
+      // ACTUAL API call to create order - commented out for portfolio
+      // const response = await ordersAPI.create(orderData);
       
-      console.log('Order created successfully:', response);
+      // console.log('Order created successfully:', response);
       
-      // Store order data for thank you page
-      const orderWithTimestamp = {
-        ...response.data,
-        timestamp: Date.now()
-      };
+      // // Store order data for thank you page
+      // const orderWithTimestamp = {
+      //   ...response.data,
+      //   timestamp: Date.now()
+      // };
       
-      sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
+      // sessionStorage.setItem('orderData', JSON.stringify(orderWithTimestamp));
       
-      // Clear the cart after successful order creation
-      clearCart();
+      // // Clear the cart after successful order creation
+      // clearCart();
       
-      // Redirect to thank you page
-      setTimeout(() => {
-        window.location.href = '/thank-you';
-      }, 200);
+      // // Redirect to thank you page
+      // setTimeout(() => {
+      //   window.location.href = '/thank-you';
+      // }, 200);
+      
+      // For portfolio mode - show message instead
+      alert('Order submission is disabled in portfolio mode (backend not running)');
+      setSubmitting(false);
+      return;
       
     } catch (error) {
-      console.error('=== CHECKOUT ERROR ===');
-      console.error('Full error:', error);
-      console.error('Error response:', error.response);
+      // console.error('=== CHECKOUT ERROR ===');
+      // console.error('Full error:', error);
+      // console.error('Error response:', error.response);
       
       let errorMessage = 'Failed to place order. Please try again.';
       
       if (error.response?.data) {
-        console.error('Server response data:', error.response.data);
+        // console.error('Server response data:', error.response.data);
         
         // Handle validation errors specifically
         if (error.response.data.errors) {

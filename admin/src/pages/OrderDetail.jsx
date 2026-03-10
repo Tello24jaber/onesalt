@@ -48,19 +48,23 @@ export default function OrderDetail() {
   const fetchOrder = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getOrder(id);
-      setOrder(response.data);
-      setFormData({
-        customer_name: response.data.customer_name,
-        phone: response.data.phone,
-        address: response.data.address,
-        city: response.data.city,
-        notes: response.data.notes || '',
-        shipping_fee: response.data.shipping_fee,
-        status: response.data.status
-      });
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.getOrder(id);
+      // setOrder(response.data);
+      // setFormData({
+      //   customer_name: response.data.customer_name,
+      //   phone: response.data.phone,
+      //   address: response.data.address,
+      //   city: response.data.city,
+      //   notes: response.data.notes || '',
+      //   shipping_fee: response.data.shipping_fee,
+      //   status: response.data.status
+      // });
+      
+      // Redirect to orders page in portfolio mode
+      navigate('/orders');
     } catch (error) {
-      toast.error('Failed to load order');
+      // toast.error('Failed to load order');
       navigate('/orders');
     } finally {
       setLoading(false);
@@ -70,12 +74,15 @@ export default function OrderDetail() {
   const handleUpdateOrder = async () => {
     try {
       setSaving(true);
-      await adminAPI.updateOrder(id, formData);
-      toast.success('Order updated successfully');
-      setEditMode(false);
-      fetchOrder();
+      // API call commented out for portfolio - backend is not running
+      // await adminAPI.updateOrder(id, formData);
+      // toast.success('Order updated successfully');
+      // setEditMode(false);
+      // fetchOrder();
+      
+      alert('Order update is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      toast.error('Failed to update order');
+      // toast.error('Failed to update order');
     } finally {
       setSaving(false);
     }
@@ -83,11 +90,14 @@ export default function OrderDetail() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      await adminAPI.updateOrderStatus(id, newStatus);
-      toast.success('Status updated successfully');
-      fetchOrder();
+      // API call commented out for portfolio - backend is not running
+      // await adminAPI.updateOrderStatus(id, newStatus);
+      // toast.success('Status updated successfully');
+      // fetchOrder();
+      
+      alert('Status update is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      toast.error('Failed to update status');
+      // toast.error('Failed to update status');
     }
   };
 
@@ -98,51 +108,60 @@ export default function OrderDetail() {
     }
 
     try {
-      await adminAPI.addOrderItem(id, {
-        ...newItem,
-        product_id: newItem.product_id || crypto.randomUUID(),
-        quantity: parseInt(newItem.quantity),
-        unit_price: parseFloat(newItem.unit_price)
-      });
-      toast.success('Item added successfully');
-      setShowAddItem(false);
-      setNewItem({
-        product_id: '',
-        product_name: '',
-        color: '',
-        size: '',
-        quantity: 1,
-        unit_price: 0
-      });
-      fetchOrder();
+      // API call commented out for portfolio - backend is not running
+      // await adminAPI.addOrderItem(id, {
+      //   ...newItem,
+      //   product_id: newItem.product_id || crypto.randomUUID(),
+      //   quantity: parseInt(newItem.quantity),
+      //   unit_price: parseFloat(newItem.unit_price)
+      // });
+      // toast.success('Item added successfully');
+      // setShowAddItem(false);
+      // setNewItem({
+      //   product_id: '',
+      //   product_name: '',
+      //   color: '',
+      //   size: '',
+      //   quantity: 1,
+      //   unit_price: 0
+      // });
+      // fetchOrder();
+      
+      alert('Add item is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      toast.error('Failed to add item');
+      // toast.error('Failed to add item');
     }
   };
 
   const handleUpdateItem = async (itemId, updates) => {
     try {
-      await adminAPI.updateOrderItem(id, itemId, {
-        ...updates,
-        quantity: parseInt(updates.quantity),
-        unit_price: parseFloat(updates.unit_price)
-      });
-      toast.success('Item updated successfully');
-      setEditingItem(null);
-      fetchOrder();
+      // API call commented out for portfolio - backend is not running
+      // await adminAPI.updateOrderItem(id, itemId, {
+      //   ...updates,
+      //   quantity: parseInt(updates.quantity),
+      //   unit_price: parseFloat(updates.unit_price)
+      // });
+      // toast.success('Item updated successfully');
+      // setEditingItem(null);
+      // fetchOrder();
+      
+      alert('Item update is disabled in portfolio mode (backend not running)');
     } catch (error) {
-      toast.error('Failed to update item');
+      // toast.error('Failed to update item');
     }
   };
 
   const handleDeleteItem = async (itemId) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await adminAPI.deleteOrderItem(id, itemId);
-        toast.success('Item deleted successfully');
-        fetchOrder();
+        // API call commented out for portfolio - backend is not running
+        // await adminAPI.deleteOrderItem(id, itemId);
+        // toast.success('Item deleted successfully');
+        // fetchOrder();
+        
+        alert('Delete item is disabled in portfolio mode (backend not running)');
       } catch (error) {
-        toast.error('Failed to delete item');
+        // toast.error('Failed to delete item');
       }
     }
   };

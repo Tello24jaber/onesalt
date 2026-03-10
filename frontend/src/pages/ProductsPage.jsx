@@ -19,13 +19,17 @@ const ProductsPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productsAPI.getAll();
-        const productsList = response.data || [];
-        setProducts(productsList);
-        setFilteredProducts(productsList);
+        // API call commented out for portfolio - backend is not running
+        // const response = await productsAPI.getAll();
+        // const productsList = response.data || [];
+        // setProducts(productsList);
+        // setFilteredProducts(productsList);
+        
+        setProducts([]);
+        setFilteredProducts([]);
       } catch (error) {
-        console.error('Error fetching products:', error);
-        toast.error('Failed to load products. Please try again.');
+        // console.error('Error fetching products:', error);
+        // toast.error('Failed to load products. Please try again.');
       } finally {
         setLoading(false);
       }

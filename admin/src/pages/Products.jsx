@@ -24,63 +24,67 @@ export default function Products() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const params = {
-        page,
-        limit: 20,
-        ...(search && { search }),
-        ...(category && { category }),
-        ...(isActive !== '' && { is_active: isActive })
-      };
+      // const params = {
+      //   page,
+      //   limit: 20,
+      //   ...(search && { search }),
+      //   ...(category && { category }),
+      //   ...(isActive !== '' && { is_active: isActive })
+      // };
       
-      const response = await adminAPI.getProducts(params);
-      console.log('API Response:', response); // Debug log
+      // API call commented out for portfolio - backend is not running
+      // const response = await adminAPI.getProducts(params);
+      // console.log('API Response:', response); // Debug log
       
-      // Handle Axios response structure
-      if (response && response.data && typeof response.data === 'object') {
-        const { data } = response;
+      // // Handle Axios response structure
+      // if (response && response.data && typeof response.data === 'object') {
+      //   const { data } = response;
         
-        // Check if data has products array
-        if (Array.isArray(data.products)) {
-          setProducts(data.products);
-          setTotalPages(data.totalPages || data.total_pages || 1);
-        }
-        // If data itself is an array
-        else if (Array.isArray(data)) {
-          setProducts(data);
-          setTotalPages(1);
-        }
-        // Fallback for unexpected structure
-        else {
-          console.warn('Unexpected response structure:', response);
-          setProducts([]);
-          setTotalPages(1);
-        }
-      } 
-      // Handle direct response (non-Axios)
-      else if (response && typeof response === 'object') {
-        if (Array.isArray(response.products)) {
-          setProducts(response.products);
-          setTotalPages(response.totalPages || 1);
-        }
-        else if (Array.isArray(response)) {
-          setProducts(response);
-          setTotalPages(1);
-        }
-        else {
-          console.warn('Unexpected response structure:', response);
-          setProducts([]);
-          setTotalPages(1);
-        }
-      }
-      // Complete fallback
-      else {
-        console.warn('Invalid response:', response);
-        setProducts([]);
-        setTotalPages(1);
-      }
+      //   // Check if data has products array
+      //   if (Array.isArray(data.products)) {
+      //     setProducts(data.products);
+      //     setTotalPages(data.totalPages || data.total_pages || 1);
+      //   }
+      //   // If data itself is an array
+      //   else if (Array.isArray(data)) {
+      //     setProducts(data);
+      //     setTotalPages(1);
+      //   }
+      //   // Fallback for unexpected structure
+      //   else {
+      //     console.warn('Unexpected response structure:', response);
+      //     setProducts([]);
+      //     setTotalPages(1);
+      //   }
+      // } 
+      // // Handle direct response (non-Axios)
+      // else if (response && typeof response === 'object') {
+      //   if (Array.isArray(response.products)) {
+      //     setProducts(response.products);
+      //     setTotalPages(response.totalPages || 1);
+      //   }
+      //   else if (Array.isArray(response)) {
+      //     setProducts(response);
+      //     setTotalPages(1);
+      //   }
+      //   else {
+      //     console.warn('Unexpected response structure:', response);
+      //     setProducts([]);
+      //     setTotalPages(1);
+      //   }
+      // }
+      // // Complete fallback
+      // else {
+      //   console.warn('Invalid response:', response);
+      //   setProducts([]);
+      //   setTotalPages(1);
+      // }
+      
+      setProducts([]);
+      setTotalPages(1);
     } catch (error) {
-      console.error('API Error:', error);
-      toast.error('Failed to load products');
+      // console.error('API Error:', error);
+      // toast.error('Failed to load products');
       setProducts([]); // Ensure it's always an array
     } finally {
       setLoading(false);
@@ -90,11 +94,14 @@ export default function Products() {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        await adminAPI.deleteProduct(id);
-        toast.success('Product deleted successfully');
-        fetchProducts();
+        // API call commented out for portfolio - backend is not running
+        // await adminAPI.deleteProduct(id);
+        // toast.success('Product deleted successfully');
+        // fetchProducts();
+        
+        alert('Delete is disabled in portfolio mode (backend not running)');
       } catch (error) {
-        toast.error('Failed to delete product');
+        // toast.error('Failed to delete product');
       }
     }
   };
