@@ -3,16 +3,16 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 // Check if environment variables are present
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+if (!process.env.SUPABASE_URL && !process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.error('Missing Supabase environment variables!');
-  console.error('Please ensure SUPABASE_URL and SUPABASE_SERVICE_KEY are set in your .env file');
+  console.error('Please ensure SUPABASE_URL (or VITE_SUPABASE_URL) and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) are set in your .env file');
   process.exit(1);
 }
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Validate Google Maps link
